@@ -34,10 +34,19 @@ Portfolio project: code quality, architecture decisions and docs matter as much 
 - Code, comments and docs in English. Talk to the user in Spanish.
 - Ask before adding dependencies not already in the repo.
 
+## Testing
+
+- Tests run against a real Postgres, in a separate `<db>_test` database created and migrated by `apps/api/test/global-setup.ts`.
+- Tenant isolation is tested per layer: `isolation.api` (HTTP), `isolation.repo` (repository without RLS), `isolation.rls` (raw SQL as `closer_app` on every tenant table found in the catalog).
+- A new tenant table must be seeded in `isolation.rls.test.ts`; the suite fails until it is.
+- New tenant routes need cross-tenant cases in `isolation.api.test.ts`.
+
 ## Before production
 
 - Wire an email provider; set `requireEmailVerification: true` (invitations already require a verified email).
 - Replace logged verification/invitation links with real emails.
+- Bundle the API (e.g. tsup/esbuild) instead of running it with tsx.
+- Trust `x-forwarded-for` only from the known proxy; move Better Auth rate limiting to shared storage when running more than one instance.
 
 ## Commands
 
@@ -54,7 +63,7 @@ docker compose up -d  # local Postgres + pgvector
 
 ## Roadmap
 
-- [ ] **Week 1**: monorepo, auth + organizations + roles, base Drizzle schema, CI, deployable skeleton
+- [x] **Week 1**: monorepo, auth + organizations + roles, base Drizzle schema, CI, deployable skeleton
 - [ ] **Week 2**: inventory CRUD + CSV import, document ingestion queue + embeddings
 - [ ] **Week 3**: agent runtime with tool use + streaming, test chat in dashboard
 - [ ] **Week 4**: embeddable widget, leads, human handoff, visit scheduling
