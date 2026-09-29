@@ -1,12 +1,30 @@
+import { createDb } from "@closer/db";
 import { serve } from "@hono/node-server";
-import { Hono } from "hono";
+import { createApp } from "./app";
+import { createAuth } from "./auth";
+import { loadEnv } from "./env";
+import { createLogger } from "./lib/logger";
 
-const app = new Hono();
+const env = loadEnv();
+const logger = createLogger(env);
+const { db, close } = createDb(env.DATABASE_APP_URL);
+const auth = createAuth({ db, env, logger });
+const app = createApp({ db, auth, logger });
 
-app.get("/health", (c) => c.json({ status: "ok" }));
+const server = serve({ fetch: app.fetch, port: env.API_PORT }, (info) => {
+  logger.info({ port: info.port }, "api listening");
+});
 
-const port = Number(process.env.API_PORT ?? 4000);
-
-serve({ fetch: app.fetch, port }, (info) => {
-  console.info(`api listening on http://localhost:${info.port}`);
+// Drain in-flight requests and close the pool on deploys/restarts.
+function shutdown(signal: string) {
+  logger.info({ signal }, "shutting down");
+  server.close(() => {
+    void close().finally(() => process.exit(0));
+  });
+}
+process.on("SIGTERM", () => {
+  shutdown("SIGTERM");
+});
+process.on("SIGINT", () => {
+  shutdown("SIGINT");
 });

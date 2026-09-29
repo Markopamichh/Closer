@@ -34,6 +34,11 @@ Portfolio project: code quality, architecture decisions and docs matter as much 
 - Code, comments and docs in English. Talk to the user in Spanish.
 - Ask before adding dependencies not already in the repo.
 
+## Before production
+
+- Wire an email provider; set `requireEmailVerification: true` (invitations already require a verified email).
+- Replace logged verification/invitation links with real emails.
+
 ## Commands
 
 ```bash
