@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A newer push to the same branch/PR makes the running check obsolete.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Lint, typecheck, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        # Same image as docker-compose.yml: Postgres 17 + pgvector, like Supabase.
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: closer
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d closer"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+
+    env:
+      # Throwaway credentials for the ephemeral CI database only.
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/closer
+      DATABASE_APP_URL: postgres://closer_app:closer_app@localhost:5432/closer
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # Locally this is done by packages/db/docker/init.sql.
+      - name: Create runtime database role
+        run: >-
+          psql "$DATABASE_URL" -c
+          "CREATE ROLE closer_app LOGIN PASSWORD 'closer_app' NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE"
+
+      - name: Test
+        run: pnpm test
