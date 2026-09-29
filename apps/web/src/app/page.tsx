@@ -1,7 +1,6 @@
+import { redirect } from "next/navigation";
+
+// The marketing landing page arrives in Week 6.
 export default function HomePage() {
-  return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="text-2xl font-semibold">Closer</h1>
-    </main>
-  );
+  redirect("/select-org");
 }
