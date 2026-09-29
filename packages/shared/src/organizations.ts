@@ -16,3 +16,31 @@ export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
 export const orgIdParamSchema = z.object({
   orgId: z.uuid(),
 });
+
+// Response shapes, validated by the web app when reading from the API.
+
+export const organizationSummarySchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  slug: z.string(),
+  role: z.enum(ORG_ROLES),
+});
+export type OrganizationSummary = z.infer<typeof organizationSummarySchema>;
+
+export const organizationListSchema = z.object({
+  organizations: z.array(organizationSummarySchema),
+});
+
+export const createdOrganizationSchema = organizationSummarySchema;
+
+export const meSchema = z.object({
+  user: z.object({
+    id: z.uuid(),
+    name: z.string(),
+    email: z.string(),
+    emailVerified: z.boolean(),
+    image: z.string().nullable(),
+  }),
+  activeOrganizationId: z.uuid().nullable(),
+});
+export type Me = z.infer<typeof meSchema>;

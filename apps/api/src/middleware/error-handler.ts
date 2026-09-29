@@ -32,6 +32,7 @@ export const errorHandler: ErrorHandler<{ Variables: BaseVariables }> = (err, c)
         requestId,
       },
     };
+    // Better Auth types the status as `number`; Hono wants its literal union of codes.
     return c.json(body, err.statusCode as ContentfulStatusCode);
   }
 

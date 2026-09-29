@@ -1,6 +1,6 @@
 "use client";
 
-import { createOrganizationSchema } from "@closer/shared";
+import { createdOrganizationSchema, createOrganizationSchema } from "@closer/shared";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FormError } from "@/components/auth/form-error";
@@ -26,7 +26,7 @@ export function CreateOrgForm() {
     setPending(true);
     setError(null);
     try {
-      const org = await apiPost<{ id: string }>("/api/organizations", parsed.data);
+      const org = await apiPost("/api/organizations", parsed.data, createdOrganizationSchema);
       router.push(`/dashboard/${org.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create the organization");

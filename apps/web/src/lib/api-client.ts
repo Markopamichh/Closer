@@ -1,5 +1,7 @@
-/** Browser-side call to the API (same origin via the /api rewrite). */
-export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+import type { ZodType } from "zod";
+
+/** Browser-side call to the API (same origin via the /api rewrite); response is validated. */
+export async function apiPost<T>(path: string, body: unknown, schema: ZodType<T>): Promise<T> {
   const res = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -7,7 +9,7 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   });
   const data: unknown = await res.json().catch(() => null);
   if (!res.ok) throw new Error(errorMessage(data) ?? `Request failed (${res.status})`);
-  return data as T;
+  return schema.parse(data);
 }
 
 function errorMessage(data: unknown): string | undefined {
