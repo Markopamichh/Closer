@@ -5,6 +5,7 @@ Multi-tenant SaaS: a business (car dealership, real estate agency, etc.) uploads
 Portfolio project: code quality, architecture decisions and docs matter as much as features.
 
 ## Stack
+
 - Monorepo: Turborepo + pnpm workspaces
 - `apps/web`: Next.js (App Router), Tailwind, shadcn/ui — dashboard + landing
 - `apps/api`: Hono on Node — **all business logic lives here**
@@ -18,6 +19,7 @@ Portfolio project: code quality, architecture decisions and docs matter as much 
 - Later: BullMQ + Redis, Claude API (tool use, SSE streaming)
 
 ## Conventions
+
 - TypeScript strict everywhere. `any` is forbidden (use `unknown` + narrowing).
 - Zod validates every input boundary (HTTP bodies/params/query, env vars, external APIs).
 - Every tenant table has `org_id` (FK to `organizations`, indexed) and `created_at`/`updated_at`.
@@ -33,6 +35,7 @@ Portfolio project: code quality, architecture decisions and docs matter as much 
 - Ask before adding dependencies not already in the repo.
 
 ## Commands
+
 ```bash
 pnpm dev          # web (:3000) + api (:4000)
 pnpm build
@@ -45,6 +48,7 @@ docker compose up -d  # local Postgres + pgvector
 ```
 
 ## Roadmap
+
 - [ ] **Week 1**: monorepo, auth + organizations + roles, base Drizzle schema, CI, deployable skeleton
 - [ ] **Week 2**: inventory CRUD + CSV import, document ingestion queue + embeddings
 - [ ] **Week 3**: agent runtime with tool use + streaming, test chat in dashboard

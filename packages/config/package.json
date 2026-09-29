@@ -1,0 +1,10 @@
+{
+  "name": "@closer/config",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./eslint": "./eslint.config.js",
+    "./prettier": "./prettier.config.js",
+    "./tsconfig/*": "./tsconfig/*"
+  }
+}

@@ -1,0 +1,8 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Only packages that genuinely need install scripts may run them.
+allowBuilds:
+  esbuild: true
+  unrs-resolver: false
