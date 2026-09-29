@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import type { Db } from "@closer/db";
+import { listOrganizationsForUser } from "@closer/db";
 import { createOrganizationSchema, inviteMemberSchema } from "@closer/shared";
 import { Hono } from "hono";
 import type { Auth } from "../auth";
@@ -23,9 +24,16 @@ function toSlug(name: string): string {
 export function organizationRoutes({ auth, db }: { auth: Auth; db: Db }) {
   const r = new Hono<{ Variables: AuthVariables }>();
 
-  r.use("*", requireAuth(auth));
+  // Auth is applied per route, not with `use("*")`: that wildcard would also match the
+  // nested /:orgId/agents routes mounted separately and authenticate them twice.
+  const authed = requireAuth(auth);
 
-  r.post("/", validate("json", createOrganizationSchema), async (c) => {
+  r.get("/", authed, async (c) => {
+    const organizations = await listOrganizationsForUser(db, c.get("user").id);
+    return c.json({ organizations });
+  });
+
+  r.post("/", authed, validate("json", createOrganizationSchema), async (c) => {
     const { name } = c.req.valid("json");
     const org = await auth.api.createOrganization({
       body: { name, slug: toSlug(name) },
@@ -37,6 +45,7 @@ export function organizationRoutes({ auth, db }: { auth: Auth; db: Db }) {
   // requireRole runs before body validation: a non-member gets 404 regardless of the body.
   r.post(
     "/:orgId/invitations",
+    authed,
     requireRole(db, "owner"),
     validate("json", inviteMemberSchema),
     async (c) => {

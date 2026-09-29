@@ -1,6 +1,5 @@
 name: closer
 
-
 services:
   postgres:
     # Same Postgres major as Supabase, with pgvector preinstalled.
