@@ -3,3 +3,4 @@ export * from "./errors";
 export * from "./memberships";
 export * from "./schema";
 export * from "./tenant";
+export { sql } from "drizzle-orm";
