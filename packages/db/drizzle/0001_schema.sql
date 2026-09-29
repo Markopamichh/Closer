@@ -307,13 +307,13 @@ CREATE POLICY "app_only" ON "organizations" AS PERMISSIVE FOR ALL TO "closer_app
 CREATE POLICY "app_only" ON "sessions" AS PERMISSIVE FOR ALL TO "closer_app" USING (true) WITH CHECK (true);--> statement-breakpoint
 CREATE POLICY "app_only" ON "users" AS PERMISSIVE FOR ALL TO "closer_app" USING (true) WITH CHECK (true);--> statement-breakpoint
 CREATE POLICY "app_only" ON "verifications" AS PERMISSIVE FOR ALL TO "closer_app" USING (true) WITH CHECK (true);--> statement-breakpoint
-CREATE POLICY "tenant_isolation" ON "agents" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = closer_current_org_id()) WITH CHECK (org_id = closer_current_org_id());--> statement-breakpoint
-CREATE POLICY "tenant_isolation" ON "ai_traces" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = closer_current_org_id()) WITH CHECK (org_id = closer_current_org_id());--> statement-breakpoint
-CREATE POLICY "tenant_isolation" ON "chunks" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = closer_current_org_id()) WITH CHECK (org_id = closer_current_org_id());--> statement-breakpoint
-CREATE POLICY "tenant_isolation" ON "conversations" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = closer_current_org_id()) WITH CHECK (org_id = closer_current_org_id());--> statement-breakpoint
-CREATE POLICY "tenant_isolation" ON "documents" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = closer_current_org_id()) WITH CHECK (org_id = closer_current_org_id());--> statement-breakpoint
-CREATE POLICY "tenant_isolation" ON "inventory_items" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = closer_current_org_id()) WITH CHECK (org_id = closer_current_org_id());--> statement-breakpoint
-CREATE POLICY "tenant_isolation" ON "leads" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = closer_current_org_id()) WITH CHECK (org_id = closer_current_org_id());--> statement-breakpoint
-CREATE POLICY "tenant_isolation" ON "messages" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = closer_current_org_id()) WITH CHECK (org_id = closer_current_org_id());--> statement-breakpoint
-CREATE POLICY "tenant_isolation" ON "tool_calls" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = closer_current_org_id()) WITH CHECK (org_id = closer_current_org_id());--> statement-breakpoint
-CREATE POLICY "tenant_isolation" ON "usage_events" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = closer_current_org_id()) WITH CHECK (org_id = closer_current_org_id());
+CREATE POLICY "tenant_isolation" ON "agents" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = (select closer_current_org_id())) WITH CHECK (org_id = (select closer_current_org_id()));--> statement-breakpoint
+CREATE POLICY "tenant_isolation" ON "ai_traces" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = (select closer_current_org_id())) WITH CHECK (org_id = (select closer_current_org_id()));--> statement-breakpoint
+CREATE POLICY "tenant_isolation" ON "chunks" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = (select closer_current_org_id())) WITH CHECK (org_id = (select closer_current_org_id()));--> statement-breakpoint
+CREATE POLICY "tenant_isolation" ON "conversations" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = (select closer_current_org_id())) WITH CHECK (org_id = (select closer_current_org_id()));--> statement-breakpoint
+CREATE POLICY "tenant_isolation" ON "documents" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = (select closer_current_org_id())) WITH CHECK (org_id = (select closer_current_org_id()));--> statement-breakpoint
+CREATE POLICY "tenant_isolation" ON "inventory_items" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = (select closer_current_org_id())) WITH CHECK (org_id = (select closer_current_org_id()));--> statement-breakpoint
+CREATE POLICY "tenant_isolation" ON "leads" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = (select closer_current_org_id())) WITH CHECK (org_id = (select closer_current_org_id()));--> statement-breakpoint
+CREATE POLICY "tenant_isolation" ON "messages" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = (select closer_current_org_id())) WITH CHECK (org_id = (select closer_current_org_id()));--> statement-breakpoint
+CREATE POLICY "tenant_isolation" ON "tool_calls" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = (select closer_current_org_id())) WITH CHECK (org_id = (select closer_current_org_id()));--> statement-breakpoint
+CREATE POLICY "tenant_isolation" ON "usage_events" AS PERMISSIVE FOR ALL TO "closer_app" USING (org_id = (select closer_current_org_id())) WITH CHECK (org_id = (select closer_current_org_id()));

@@ -27,8 +27,9 @@ export const tenantIsolationPolicy = () =>
     as: "permissive",
     for: "all",
     to: closerApp,
-    using: sql`org_id = closer_current_org_id()`,
-    withCheck: sql`org_id = closer_current_org_id()`,
+    // Wrapped in a subselect so Postgres evaluates it once per query, not once per row.
+    using: sql`org_id = (select closer_current_org_id())`,
+    withCheck: sql`org_id = (select closer_current_org_id())`,
   });
 
 /**

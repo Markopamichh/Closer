@@ -29,4 +29,5 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
 -- so a query without tenant context matches no rows instead of failing open.
 CREATE OR REPLACE FUNCTION closer_current_org_id() RETURNS uuid
   LANGUAGE sql STABLE
-  AS $$ SELECT nullif(current_setting('app.org_id', true), '')::uuid $$;
+  SET search_path = ''
+  AS $$ SELECT nullif(pg_catalog.current_setting('app.org_id', true), '')::uuid $$;
