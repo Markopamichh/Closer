@@ -1,4 +1,7 @@
 import { runMigrations } from "@closer/db/migrate";
+import { rm } from "node:fs/promises";
+import { Queue } from "bullmq";
+import { Redis } from "ioredis";
 import postgres from "postgres";
 import type { TestProject } from "vitest/node";
 
@@ -23,4 +26,15 @@ export default async function setup(project: TestProject) {
   const owner = postgres(ownerUrl, { max: 1, onnotice: () => undefined });
   await owner`truncate users, organizations, verifications cascade`;
   await owner.end();
+
+  // Leftovers from a previous run: queued jobs (test prefix only) and uploaded files.
+  const { REDIS_URL, QUEUE_PREFIX, LOCAL_STORAGE_DIR } = project.config.env;
+  if (!REDIS_URL || !QUEUE_PREFIX?.endsWith("-test"))
+    throw new Error("Refusing to clear a non-test queue");
+  const connection = new Redis(REDIS_URL, { maxRetriesPerRequest: null });
+  const queue = new Queue("document-ingestion", { connection, prefix: QUEUE_PREFIX });
+  await queue.obliterate({ force: true });
+  await queue.close();
+  await connection.quit();
+  if (LOCAL_STORAGE_DIR) await rm(LOCAL_STORAGE_DIR, { recursive: true, force: true });
 }

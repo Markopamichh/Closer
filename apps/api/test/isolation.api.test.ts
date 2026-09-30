@@ -32,11 +32,13 @@ async function snapshotOrgB() {
   const inventory = await ctx.sql`
     select id, title, status, price_cents, attributes, updated_at
     from inventory_items where org_id = ${w.orgB} order by id`;
+  const documents = await ctx.sql`
+    select id, title, status, updated_at from documents where org_id = ${w.orgB} order by id`;
   const [counts] = await ctx.sql`
     select
       (select count(*) from invitations where org_id = ${w.orgB})::int as invitations,
       (select count(*) from memberships where org_id = ${w.orgB})::int as memberships`;
-  return { agents, inventory, counts };
+  return { agents, inventory, documents, counts };
 }
 
 type Attack = {
@@ -100,6 +102,26 @@ const attacksOnOrgB: Attack[] = [
     name: "delete B's inventory item",
     method: "DELETE",
     path: () => `/api/organizations/${w.orgB}/inventory/${w.itemB.id}`,
+  },
+  {
+    name: "list B's documents",
+    method: "GET",
+    path: () => `/api/organizations/${w.orgB}/documents`,
+  },
+  {
+    name: "read B's document",
+    method: "GET",
+    path: () => `/api/organizations/${w.orgB}/documents/${w.docB.id}`,
+  },
+  {
+    name: "reprocess B's document",
+    method: "POST",
+    path: () => `/api/organizations/${w.orgB}/documents/${w.docB.id}/reprocess`,
+  },
+  {
+    name: "delete B's document",
+    method: "DELETE",
+    path: () => `/api/organizations/${w.orgB}/documents/${w.docB.id}`,
   },
   {
     name: "invite someone into B",
@@ -469,5 +491,18 @@ describe("inventory roles and org scoping", () => {
     const { items } = await json<{ items: { id: string; orgId: string }[] }>(res);
     expect(items.map((i) => i.id)).toEqual([w.itemA.id]);
     expect(items.every((i) => i.orgId === w.orgA)).toBe(true);
+  });
+});
+
+describe("document uploads across tenants", () => {
+  it("a user of A cannot upload into B (404, no row, no file)", async () => {
+    const before = await snapshotOrgB();
+    const form = new FormData();
+    form.append("file", new File(["Injected knowledge"], "inject.md", { type: "text/plain" }));
+
+    const res = await w.a.owner.upload(`/api/organizations/${w.orgB}/documents`, form);
+
+    expect(res.status).toBe(404);
+    expect(await snapshotOrgB()).toEqual(before);
   });
 });

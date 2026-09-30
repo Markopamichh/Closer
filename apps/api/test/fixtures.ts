@@ -2,8 +2,20 @@ import type { OrgRole } from "@closer/shared";
 import type { Client, TestContext } from "./helpers";
 import { json, signUp } from "./helpers";
 
+export function fileForm(
+  name: string,
+  content: string | Uint8Array,
+  type = "text/plain",
+): FormData {
+  const form = new FormData();
+  const bytes = typeof content === "string" ? Buffer.from(content, "utf8") : Buffer.from(content);
+  form.append("file", new File([bytes], name, { type }));
+  return form;
+}
+
 type Agent = { id: string; orgId: string; name: string };
 type Item = { id: string; orgId: string; externalId: string | null };
+type Doc = { id: string; title: string; status: string };
 
 export type World = {
   orgA: string;
@@ -18,6 +30,8 @@ export type World = {
   agentB: Agent;
   itemA: Item;
   itemB: Item;
+  docA: Doc;
+  docB: Doc;
 };
 
 async function createOrg(client: Client, name: string): Promise<string> {
@@ -48,6 +62,12 @@ async function createItem(client: Client, orgId: string, externalId: string): Pr
   });
   if (res.status !== 201) throw new Error(`create item failed: ${res.status}`);
   return (await json<{ item: Item }>(res)).item;
+}
+
+async function createDocument(client: Client, orgId: string, name: string, text: string) {
+  const res = await client.upload(`/api/organizations/${orgId}/documents`, fileForm(name, text));
+  if (res.status !== 201) throw new Error(`upload failed: ${res.status}`);
+  return (await json<{ document: Doc }>(res)).document;
 }
 
 /**
@@ -85,6 +105,11 @@ export async function buildWorld({ app, sql }: TestContext): Promise<World> {
     createItem(ownerB, orgB, "VIN-SHARED-001"),
   ]);
 
+  const [docA, docB] = await Promise.all([
+    createDocument(ownerA, orgA, "financing.md", "# Financing\n\nAcme offers 60 month plans."),
+    createDocument(ownerB, orgB, "rentals.md", "# Rentals\n\nBeta requires two guarantors."),
+  ]);
+
   return {
     orgA,
     orgB,
@@ -95,5 +120,7 @@ export async function buildWorld({ app, sql }: TestContext): Promise<World> {
     agentB,
     itemA,
     itemB,
+    docA,
+    docB,
   };
 }
