@@ -29,11 +29,14 @@ afterAll(async () => {
 async function snapshotOrgB() {
   const agents = await ctx.sql`
     select id, name, tone, is_active, updated_at from agents where org_id = ${w.orgB} order by id`;
+  const inventory = await ctx.sql`
+    select id, title, status, price_cents, attributes, updated_at
+    from inventory_items where org_id = ${w.orgB} order by id`;
   const [counts] = await ctx.sql`
     select
       (select count(*) from invitations where org_id = ${w.orgB})::int as invitations,
       (select count(*) from memberships where org_id = ${w.orgB})::int as memberships`;
-  return { agents, counts };
+  return { agents, inventory, counts };
 }
 
 type Attack = {
@@ -66,6 +69,37 @@ const attacksOnOrgB: Attack[] = [
     name: "delete B's agent",
     method: "DELETE",
     path: () => `/api/organizations/${w.orgB}/agents/${w.agentB.id}`,
+  },
+  {
+    name: "list B's inventory",
+    method: "GET",
+    path: () => `/api/organizations/${w.orgB}/inventory`,
+  },
+  {
+    name: "read B's inventory item",
+    method: "GET",
+    path: () => `/api/organizations/${w.orgB}/inventory/${w.itemB.id}`,
+  },
+  {
+    name: "add an item to B's inventory",
+    method: "POST",
+    path: () => `/api/organizations/${w.orgB}/inventory`,
+    body: () => ({
+      kind: "vehicle",
+      title: "Injected",
+      attributes: { make: "X", model: "Y", year: 2020 },
+    }),
+  },
+  {
+    name: "update B's inventory item",
+    method: "PATCH",
+    path: () => `/api/organizations/${w.orgB}/inventory/${w.itemB.id}`,
+    body: () => ({ status: "sold", priceCents: 1 }),
+  },
+  {
+    name: "delete B's inventory item",
+    method: "DELETE",
+    path: () => `/api/organizations/${w.orgB}/inventory/${w.itemB.id}`,
   },
   {
     name: "invite someone into B",
@@ -364,5 +398,76 @@ describe("joining a tenant requires an invitation for a verified email", () => {
     const rows = await ctx.sql`
       select 1 from memberships where org_id = ${w.orgA} and user_id = ${other.userId}`;
     expect(rows.length).toBe(0);
+  });
+});
+
+describe("inventory roles and org scoping", () => {
+  const inventoryPath = () => `/api/organizations/${w.orgA}/inventory`;
+  const newVehicle = (title: string, extra: Record<string, unknown> = {}) => ({
+    kind: "vehicle",
+    title,
+    attributes: { make: "Ford", model: "Ranger", year: 2022 },
+    ...extra,
+  });
+
+  async function disposableItem(): Promise<string> {
+    const res = await w.a.owner.request(inventoryPath(), {
+      method: "POST",
+      body: newVehicle("Disposable"),
+    });
+    return (await json<{ item: { id: string } }>(res)).item.id;
+  }
+
+  it.each([
+    ["owner", 201],
+    ["agent", 201],
+    ["viewer", 403],
+  ] as const)("%s adding an item → %i", async (role, status) => {
+    const res = await w.a[role].request(inventoryPath(), {
+      method: "POST",
+      body: newVehicle(`By ${role}`),
+    });
+    expect(res.status).toBe(status);
+  });
+
+  it.each([
+    ["owner", 200],
+    ["agent", 200],
+    ["viewer", 403],
+  ] as const)("%s marking an item as reserved → %i", async (role, status) => {
+    const id = await disposableItem();
+    const res = await w.a[role].request(`${inventoryPath()}/${id}`, {
+      method: "PATCH",
+      body: { status: "reserved" },
+    });
+    expect(res.status).toBe(status);
+  });
+
+  it.each([
+    ["owner", 204],
+    ["agent", 403],
+    ["viewer", 403],
+  ] as const)("%s deleting an item → %i", async (role, status) => {
+    const id = await disposableItem();
+    const res = await w.a[role].request(`${inventoryPath()}/${id}`, { method: "DELETE" });
+    expect(res.status).toBe(status);
+  });
+
+  it("an orgId smuggled in the body is ignored: the item lands in A", async () => {
+    const res = await w.a.owner.request(inventoryPath(), {
+      method: "POST",
+      body: newVehicle("Smuggled", { orgId: w.orgB }),
+    });
+    expect(res.status).toBe(201);
+    const { item } = await json<{ item: { id: string } }>(res);
+    const [row] = await ctx.sql`select org_id from inventory_items where id = ${item.id}`;
+    expect(row?.org_id).toBe(w.orgA);
+  });
+
+  it("A's search never returns B's items, even for B's exact external id", async () => {
+    const res = await w.a.owner.request(`${inventoryPath()}?q=VIN-SHARED-001`);
+    const { items } = await json<{ items: { id: string; orgId: string }[] }>(res);
+    expect(items.map((i) => i.id)).toEqual([w.itemA.id]);
+    expect(items.every((i) => i.orgId === w.orgA)).toBe(true);
   });
 });
