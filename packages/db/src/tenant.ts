@@ -41,5 +41,5 @@ export function createTenantRepo(tx: Tx, orgId: string) {
 }
 
 export type TenantRepo = ReturnType<typeof createTenantRepo>;
-export type { NewChunk, NewDocument } from "./repos/documents";
+export type { ChunkSearch, ChunkSearchHit, NewChunk, NewDocument } from "./repos/documents";
 export type { InventoryFilter, InventoryItemPatch, NewInventoryItem } from "./repos/inventory";

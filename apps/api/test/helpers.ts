@@ -36,7 +36,8 @@ export function createTestContext(): TestContext {
   const storage = createStorage(env);
   const documents = createDocumentQueue(env.REDIS_URL, env.QUEUE_PREFIX);
   const documentQueue = documents.queue;
-  const app = createApp({ db, auth, logger, storage, documentQueue });
+  const embedder = createFakeEmbedder();
+  const app = createApp({ db, auth, logger, storage, documentQueue, embedder });
   const ownerUrl = process.env.DATABASE_URL;
   if (!ownerUrl) throw new Error("DATABASE_URL missing");
   const sql = postgres(ownerUrl, { max: 2, onnotice: () => undefined });
@@ -47,7 +48,7 @@ export function createTestContext(): TestContext {
     sql,
     storage,
     documentQueue,
-    embedder: createFakeEmbedder(),
+    embedder,
     logger,
     close: async () => {
       await Promise.all([closeDb(), sql.end(), documents.close()]);

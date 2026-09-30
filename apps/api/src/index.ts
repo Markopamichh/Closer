@@ -3,6 +3,7 @@ import { serve } from "@hono/node-server";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
 import { loadEnv } from "./env";
+import { createEmbedder } from "./lib/embedder";
 import { createLogger } from "./lib/logger";
 import { createStorage } from "./lib/storage";
 import { createDocumentQueue } from "./queue/documents";
@@ -18,6 +19,7 @@ const app = createApp({
   logger,
   storage: createStorage(env),
   documentQueue: documents.queue,
+  embedder: createEmbedder(env, logger),
 });
 
 const server = serve({ fetch: app.fetch, port: env.API_PORT }, (info) => {

@@ -23,3 +23,14 @@ export const documentSchema = z.object({
 export type DocumentDto = z.infer<typeof documentSchema>;
 
 export const documentListSchema = z.object({ documents: z.array(documentSchema) });
+
+export const chunkSearchHitSchema = z.object({
+  chunkId: z.uuid(),
+  documentId: z.uuid(),
+  documentTitle: z.string(),
+  chunkIndex: z.number().int(),
+  content: z.string(),
+  /** Cosine similarity in [-1, 1]; higher is more relevant. */
+  score: z.number(),
+});
+export type ChunkSearchHitDto = z.infer<typeof chunkSearchHitSchema>;

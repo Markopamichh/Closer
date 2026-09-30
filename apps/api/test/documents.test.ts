@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import type { DocumentDto } from "@closer/shared";
+import type { ChunkSearchHitDto, DocumentDto } from "@closer/shared";
 import { Worker } from "bullmq";
 import { Redis } from "ioredis";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -150,6 +150,79 @@ describe("managing documents", () => {
     expect((await w.a[role].request(`${base()}/${doc.id}`, { method: "DELETE" })).status).toBe(
       status,
     );
+  });
+});
+
+describe("semantic search", () => {
+  async function readyDoc(text: string) {
+    const doc = await uploadOk("search-fixture.md", text);
+    await processDocument(
+      { db: ctx.db, storage: ctx.storage, embedder: ctx.embedder, logger: ctx.logger },
+      { orgId: w.orgA, documentId: doc.id, attempt: 1, maxAttempts: 1 },
+    );
+    return doc;
+  }
+
+  it("returns chunks from a ready document matching the query", async () => {
+    await readyDoc("# Warranty\n\nWe offer a 3-year warranty on all vehicles.");
+
+    const res = await w.a.owner.request(`${base()}/search?q=warranty+vehicles`);
+    expect(res.status).toBe(200);
+    const body = await json<{ results: ChunkSearchHitDto[] }>(res);
+    expect(body.results.length).toBeGreaterThan(0);
+    expect(body.results[0]).toMatchObject({
+      chunkId: expect.any(String) as unknown,
+      documentId: expect.any(String) as unknown,
+      documentTitle: "search-fixture.md",
+      content: expect.stringContaining("warranty") as unknown,
+      score: expect.any(Number) as unknown,
+    });
+  });
+
+  it("does not return chunks from documents still pending (not ready)", async () => {
+    const doc = await uploadOk("pending-search.md", "# Insurance\n\nWe sell insurance policies.");
+    // doc is pending — not processed
+
+    const res = await w.a.owner.request(`${base()}/search?q=insurance+policies`);
+    expect(res.status).toBe(200);
+    const body = await json<{ results: ChunkSearchHitDto[] }>(res);
+    const ids = body.results.map((r) => r.documentId);
+    expect(ids).not.toContain(doc.id);
+  });
+
+  it("respects the limit query parameter", async () => {
+    await readyDoc("# Maintenance\n\nFull oil change service.\n\nTire rotation included.");
+
+    const res = await w.a.owner.request(`${base()}/search?q=maintenance&limit=1`);
+    expect(res.status).toBe(200);
+    const body = await json<{ results: ChunkSearchHitDto[] }>(res);
+    expect(body.results.length).toBeLessThanOrEqual(1);
+  });
+
+  it("returns 422 when q is missing", async () => {
+    expect((await w.a.owner.request(`${base()}/search`)).status).toBe(422);
+  });
+
+  it("filters out chunks whose embeddingModel differs from the query model (starvation guard)", async () => {
+    const doc = await uploadOk(
+      "stale-model.md",
+      "# Trade-in\n\nWe accept trade-ins at market value.",
+    );
+    await processDocument(
+      { db: ctx.db, storage: ctx.storage, embedder: ctx.embedder, logger: ctx.logger },
+      { orgId: w.orgA, documentId: doc.id, attempt: 1, maxAttempts: 1 },
+    );
+
+    // Simulate a model change by overwriting the stored embeddingModel metadata so the
+    // chunks look like they came from a different provider.
+    await ctx.sql`update chunks set metadata = metadata || '{"embeddingModel":"old-model-v1"}'::jsonb where document_id = ${doc.id}`;
+
+    // The route embeds with fake-bow-1024; those chunks now claim old-model-v1 — must be excluded.
+    const res = await w.a.owner.request(`${base()}/search?q=trade-in+market+value`);
+    expect(res.status).toBe(200);
+    const body = await json<{ results: ChunkSearchHitDto[] }>(res);
+    const ids = body.results.map((r) => r.documentId);
+    expect(ids).not.toContain(doc.id);
   });
 });
 

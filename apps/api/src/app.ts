@@ -1,3 +1,4 @@
+import type { EmbeddingProvider } from "@closer/ai";
 import type { Db } from "@closer/db";
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
@@ -21,6 +22,7 @@ export type AppDeps = {
   logger: Logger;
   storage: FileStorage;
   documentQueue: DocumentQueue;
+  embedder: EmbeddingProvider;
 };
 
 /** Builds the HTTP app from its dependencies, so tests can inject their own. */

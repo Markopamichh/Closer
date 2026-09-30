@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import type { Tx } from "../client";
 import { chunks, documents } from "../schema";
 
@@ -17,6 +17,23 @@ export type NewChunk = {
 type StatusUpdate = Partial<Pick<Document, "status" | "error" | "chunkCount" | "processedAt">>;
 
 const CHUNK_INSERT_BATCH = 200;
+
+export type ChunkSearchHit = {
+  chunkId: string;
+  documentId: string;
+  documentTitle: string;
+  chunkIndex: number;
+  content: string;
+  /** Cosine similarity in [-1, 1]; higher is more relevant. */
+  score: number;
+};
+
+export type ChunkSearch = {
+  embedding: number[];
+  /** Only chunks embedded with this model are comparable to the query vector. */
+  embeddingModel: string;
+  limit: number;
+};
 
 export function documentsRepo(tx: Tx, orgId: string) {
   const scope = (id: string) => and(eq(documents.orgId, orgId), eq(documents.id, id));
@@ -52,6 +69,54 @@ export function documentsRepo(tx: Tx, orgId: string) {
     delete: async (id: string) => {
       const [row] = await tx.delete(documents).where(scope(id)).returning();
       return row ?? null;
+    },
+
+    /**
+     * Nearest chunks by cosine distance, restricted to this org's ready documents.
+     *
+     * An HNSW index returns the k nearest vectors of the whole table and only then
+     * applies WHERE filters; if those k belong to other tenants this org gets nothing.
+     * pgvector 0.8's iterative scan keeps walking the graph until enough rows pass the
+     * filters. `relaxed_order` is faster but may return slightly out-of-order rows, so the
+     * outer query re-sorts the candidates exactly.
+     */
+    searchChunks: async ({
+      embedding,
+      embeddingModel,
+      limit,
+    }: ChunkSearch): Promise<ChunkSearchHit[]> => {
+      await tx.execute(sql`set local hnsw.iterative_scan = relaxed_order`);
+      await tx.execute(sql`set local hnsw.ef_search = 100`);
+      const vector = JSON.stringify(embedding);
+      const rows = await tx.execute<{
+        chunk_id: string;
+        document_id: string;
+        document_title: string;
+        chunk_index: number;
+        content: string;
+        distance: number;
+      }>(sql`
+        select * from (
+          select c.id as chunk_id, c.document_id, d.title as document_title, c.chunk_index,
+                 c.content, c.embedding <=> ${vector}::vector as distance
+          from ${chunks} c
+          join ${documents} d on d.id = c.document_id and d.org_id = c.org_id
+          where c.org_id = ${orgId}
+            and d.status = 'ready'
+            and c.metadata->>'embeddingModel' = ${embeddingModel}
+          order by c.embedding <=> ${vector}::vector
+          limit ${limit}
+        ) candidates
+        order by distance
+      `);
+      return rows.map((r) => ({
+        chunkId: r.chunk_id,
+        documentId: r.document_id,
+        documentTitle: r.document_title,
+        chunkIndex: r.chunk_index,
+        content: r.content,
+        score: 1 - r.distance,
+      }));
     },
 
     /**

@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
+import type { EmbeddingProvider } from "@closer/ai";
 import type { Db } from "@closer/db";
 import { withTenant } from "@closer/db";
 import type { DocumentDto } from "@closer/shared";
 import { DOCUMENT_UPLOAD_LIMITS } from "@closer/shared";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
+import { z } from "zod";
 import type { Auth } from "../auth";
 import { DOCUMENT_FORMATS, detectFormat } from "../ingestion/extract";
 import { AppError, notFound } from "../lib/errors";
@@ -14,8 +16,14 @@ import { documentKey } from "../lib/storage";
 import type { AuthVariables } from "../middleware/require-auth";
 import { requireAuth } from "../middleware/require-auth";
 import { ANY_ROLE, requireRole } from "../middleware/require-role";
+import { validate } from "../middleware/validate";
 import type { DocumentQueue } from "../queue/documents";
 import { enqueueDocument } from "../queue/documents";
+
+const searchQuerySchema = z.object({
+  q: z.string().min(1).max(500),
+  limit: z.coerce.number().int().min(1).max(20).default(10),
+});
 
 type DocumentRow = {
   id: string;
@@ -61,8 +69,9 @@ export function documentRoutes(deps: {
   db: Db;
   storage: FileStorage;
   documentQueue: DocumentQueue;
+  embedder: EmbeddingProvider;
 }) {
-  const { auth, db, storage, documentQueue } = deps;
+  const { auth, db, storage, documentQueue, embedder } = deps;
   const r = new Hono<{ Variables: AuthVariables }>();
 
   r.use("*", requireAuth(auth));
@@ -139,6 +148,26 @@ export function documentRoutes(deps: {
       }
 
       return c.json({ document: toDto(doc) }, 201);
+    },
+  );
+
+  r.get(
+    "/search",
+    requireRole(db, ...ANY_ROLE),
+    validate("query", searchQuerySchema),
+    async (c) => {
+      const { orgId } = c.get("membership");
+      const { q, limit } = c.req.valid("query");
+
+      const { embeddings } = await embedder.embed([q], "query");
+      const embedding = embeddings[0];
+      if (!embedding) throw new AppError("internal_error", "Embedding failed");
+
+      const results = await withTenant(db, orgId, (repo) =>
+        repo.documents.searchChunks({ embedding, embeddingModel: embedder.model, limit }),
+      );
+
+      return c.json({ results });
     },
   );
 

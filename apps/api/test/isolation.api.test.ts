@@ -124,6 +124,11 @@ const attacksOnOrgB: Attack[] = [
     path: () => `/api/organizations/${w.orgB}/documents/${w.docB.id}`,
   },
   {
+    name: "search B's documents",
+    method: "GET",
+    path: () => `/api/organizations/${w.orgB}/documents/search?q=rentals`,
+  },
+  {
     name: "invite someone into B",
     method: "POST",
     path: () => `/api/organizations/${w.orgB}/invitations`,
