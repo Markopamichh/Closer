@@ -10,3 +10,4 @@ coverage/
 .sc/
 *.tsbuildinfo
 next-env.d.ts
+.data/

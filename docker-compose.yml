@@ -19,5 +19,20 @@ services:
       timeout: 3s
       retries: 20
 
+  redis:
+    # Backs the BullMQ job queues. AOF persistence so queued jobs survive a restart.
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6380:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
 volumes:
   pgdata:
+  redisdata:

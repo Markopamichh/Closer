@@ -34,11 +34,21 @@ jobs:
           --health-interval 2s
           --health-timeout 3s
           --health-retries 30
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
 
     env:
       # Throwaway credentials for the ephemeral CI database only.
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/closer
       DATABASE_APP_URL: postgres://closer_app:closer_app@localhost:5432/closer
+      REDIS_URL: redis://localhost:6379
 
     steps:
       - uses: actions/checkout@v5
