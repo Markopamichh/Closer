@@ -23,6 +23,11 @@ export default defineConfig({
     env: {
       NODE_ENV: "test",
       LOG_LEVEL: "silent",
+      REDIS_URL: process.env.REDIS_URL ?? "redis://localhost:6380",
+      QUEUE_PREFIX: "closer-test",
+      STORAGE_DRIVER: "local",
+      LOCAL_STORAGE_DIR: ".data/test-uploads",
+      VOYAGE_API_KEY: "",
       DATABASE_URL: toTestDatabase(process.env.DATABASE_URL, "DATABASE_URL"),
       DATABASE_APP_URL: toTestDatabase(process.env.DATABASE_APP_URL, "DATABASE_APP_URL"),
       BETTER_AUTH_SECRET: "test-secret-test-secret-test-secret-000",

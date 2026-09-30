@@ -10,6 +10,8 @@ const envSchema = z
     /** Runtime connection as the non-bypass role `closer_app` (RLS applies). */
     DATABASE_APP_URL: z.url(),
     REDIS_URL: z.url().default("redis://localhost:6380"),
+    /** Namespaces queue keys so tests and local dev can share one Redis without crosstalk. */
+    QUEUE_PREFIX: z.string().min(1).default("closer"),
     BETTER_AUTH_SECRET: z.string().min(32),
     /** Public origin where /api/auth is reachable (the web app, which proxies /api). */
     BETTER_AUTH_URL: z.url(),
@@ -57,7 +59,9 @@ const envSchema = z
 export type Env = z.infer<typeof envSchema>;
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
-  const parsed = envSchema.safeParse(source);
+  // `KEY=` in a .env file means "not set", not "set to an empty string".
+  const defined = Object.fromEntries(Object.entries(source).filter(([, v]) => v !== ""));
+  const parsed = envSchema.safeParse(defined);
   if (!parsed.success) {
     // Fail fast at boot with a readable list instead of a runtime crash later.
     const issues = parsed.error.issues.map((i) => `  - ${i.path.join(".")}: ${i.message}`);

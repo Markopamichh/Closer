@@ -1,10 +1,17 @@
+import type { EmbeddingProvider } from "@closer/ai";
+import { createFakeEmbedder } from "@closer/ai";
 import type { Db } from "@closer/db";
 import { createDb } from "@closer/db";
 import postgres from "postgres";
 import { createApp } from "../src/app";
 import { createAuth } from "../src/auth";
 import { loadEnv } from "../src/env";
+import type { Logger } from "../src/lib/logger";
 import { createLogger } from "../src/lib/logger";
+import type { FileStorage } from "../src/lib/storage";
+import { createStorage } from "../src/lib/storage";
+import type { DocumentQueue } from "../src/queue/documents";
+import { createDocumentQueue } from "../src/queue/documents";
 
 export const WEB_ORIGIN = "http://localhost:3000";
 
@@ -14,6 +21,10 @@ export type TestContext = {
   db: Db;
   /** Owner connection (bypasses RLS) — only for seeding and asserting ground truth. */
   sql: postgres.Sql;
+  storage: FileStorage;
+  documentQueue: DocumentQueue;
+  embedder: EmbeddingProvider;
+  logger: Logger;
   close: () => Promise<void>;
 };
 
@@ -22,7 +33,10 @@ export function createTestContext(): TestContext {
   const logger = createLogger(env);
   const { db, close: closeDb } = createDb(env.DATABASE_APP_URL, { max: 5 });
   const auth = createAuth({ db, env, logger });
-  const app = createApp({ db, auth, logger });
+  const storage = createStorage(env);
+  const documents = createDocumentQueue(env.REDIS_URL, env.QUEUE_PREFIX);
+  const documentQueue = documents.queue;
+  const app = createApp({ db, auth, logger, storage, documentQueue });
   const ownerUrl = process.env.DATABASE_URL;
   if (!ownerUrl) throw new Error("DATABASE_URL missing");
   const sql = postgres(ownerUrl, { max: 2, onnotice: () => undefined });
@@ -31,8 +45,12 @@ export function createTestContext(): TestContext {
     app,
     db,
     sql,
+    storage,
+    documentQueue,
+    embedder: createFakeEmbedder(),
+    logger,
     close: async () => {
-      await Promise.all([closeDb(), sql.end()]);
+      await Promise.all([closeDb(), sql.end(), documents.close()]);
     },
   };
 }

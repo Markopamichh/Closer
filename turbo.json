@@ -15,7 +15,11 @@
     "typecheck": {},
     "test": {
       "cache": false,
-      "passThroughEnv": ["DATABASE_URL", "DATABASE_APP_URL"]
+      "passThroughEnv": ["DATABASE_URL", "DATABASE_APP_URL", "REDIS_URL"]
+    },
+    "dev:worker": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

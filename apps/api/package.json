@@ -9,9 +9,12 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "dev:worker": "tsx watch --env-file-if-exists=../../.env src/worker.ts",
+    "start:worker": "tsx src/worker.ts"
   },
   "dependencies": {
+    "@closer/ai": "workspace:*",
     "@closer/db": "workspace:*",
     "@closer/shared": "workspace:*",
     "@hono/node-server": "^2.1.1",
@@ -20,6 +23,7 @@
     "bullmq": "^6.3.10",
     "csv-parse": "^7.0.3",
     "hono": "^4.13.10",
+    "ioredis": "^6.0.0",
     "mammoth": "^1.13.0",
     "pino": "^10.3.1",
     "unpdf": "^1.8.1",

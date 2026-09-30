@@ -4,12 +4,21 @@ import { createApp } from "./app";
 import { createAuth } from "./auth";
 import { loadEnv } from "./env";
 import { createLogger } from "./lib/logger";
+import { createStorage } from "./lib/storage";
+import { createDocumentQueue } from "./queue/documents";
 
 const env = loadEnv();
 const logger = createLogger(env);
 const { db, close } = createDb(env.DATABASE_APP_URL);
 const auth = createAuth({ db, env, logger });
-const app = createApp({ db, auth, logger });
+const documents = createDocumentQueue(env.REDIS_URL, env.QUEUE_PREFIX);
+const app = createApp({
+  db,
+  auth,
+  logger,
+  storage: createStorage(env),
+  documentQueue: documents.queue,
+});
 
 const server = serve({ fetch: app.fetch, port: env.API_PORT }, (info) => {
   logger.info({ port: info.port }, "api listening");
@@ -19,7 +28,7 @@ const server = serve({ fetch: app.fetch, port: env.API_PORT }, (info) => {
 function shutdown(signal: string) {
   logger.info({ signal }, "shutting down");
   server.close(() => {
-    void close().finally(() => process.exit(0));
+    void Promise.allSettled([close(), documents.close()]).finally(() => process.exit(0));
   });
 }
 process.on("SIGTERM", () => {

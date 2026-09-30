@@ -4,15 +4,24 @@ import { requestId } from "hono/request-id";
 import type { Auth } from "./auth";
 import type { BaseVariables } from "./lib/context";
 import type { Logger } from "./lib/logger";
+import type { FileStorage } from "./lib/storage";
 import { errorHandler } from "./middleware/error-handler";
 import { requestContext } from "./middleware/request-context";
+import type { DocumentQueue } from "./queue/documents";
 import { agentRoutes } from "./routes/agents";
+import { documentRoutes } from "./routes/documents";
 import { healthRoutes } from "./routes/health";
 import { inventoryRoutes } from "./routes/inventory";
 import { meRoutes } from "./routes/me";
 import { organizationRoutes } from "./routes/organizations";
 
-export type AppDeps = { db: Db; auth: Auth; logger: Logger };
+export type AppDeps = {
+  db: Db;
+  auth: Auth;
+  logger: Logger;
+  storage: FileStorage;
+  documentQueue: DocumentQueue;
+};
 
 /** Builds the HTTP app from its dependencies, so tests can inject their own. */
 export function createApp(deps: AppDeps) {
@@ -34,6 +43,7 @@ export function createApp(deps: AppDeps) {
   app.route("/api/organizations", organizationRoutes(deps));
   app.route("/api/organizations/:orgId/agents", agentRoutes(deps));
   app.route("/api/organizations/:orgId/inventory", inventoryRoutes(deps));
+  app.route("/api/organizations/:orgId/documents", documentRoutes(deps));
 
   return app;
 }
