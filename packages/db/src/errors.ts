@@ -1,4 +1,5 @@
 const FOREIGN_KEY_VIOLATION = "23503";
+const UNIQUE_VIOLATION = "23505";
 
 /** Drizzle wraps driver errors, so look through the `cause` chain for the Postgres code. */
 function pgErrorCode(err: unknown): string | undefined {
@@ -11,3 +12,5 @@ function pgErrorCode(err: unknown): string | undefined {
 }
 
 export const isForeignKeyViolation = (err: unknown) => pgErrorCode(err) === FOREIGN_KEY_VIOLATION;
+
+export const isUniqueViolation = (err: unknown) => pgErrorCode(err) === UNIQUE_VIOLATION;

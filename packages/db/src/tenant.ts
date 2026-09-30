@@ -1,6 +1,7 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import type { Db, Tx } from "./client";
-import { agents } from "./schema";
+import { agentsRepo } from "./repos/agents";
+import { inventoryRepo } from "./repos/inventory";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -23,9 +24,6 @@ export async function withTenant<T>(
   });
 }
 
-type NewAgent = Omit<typeof agents.$inferInsert, "id" | "orgId" | "createdAt" | "updatedAt">;
-type AgentPatch = Partial<NewAgent>;
-
 /**
  * Tenant-scoped data access (layer 1). Every query filters by `orgId` explicitly and
  * every insert sets it, independently of RLS. Callers never pass org_id themselves.
@@ -33,45 +31,10 @@ type AgentPatch = Partial<NewAgent>;
 export function createTenantRepo(tx: Tx, orgId: string) {
   return {
     orgId,
-    agents: {
-      list: () =>
-        tx.select().from(agents).where(eq(agents.orgId, orgId)).orderBy(desc(agents.createdAt)),
-
-      get: async (id: string) => {
-        const [row] = await tx
-          .select()
-          .from(agents)
-          .where(and(eq(agents.orgId, orgId), eq(agents.id, id)));
-        return row ?? null;
-      },
-
-      create: async (input: NewAgent) => {
-        const [row] = await tx
-          .insert(agents)
-          .values({ ...input, orgId })
-          .returning();
-        if (!row) throw new Error("agents.create: insert returned no row");
-        return row;
-      },
-
-      update: async (id: string, patch: AgentPatch) => {
-        const [row] = await tx
-          .update(agents)
-          .set(patch)
-          .where(and(eq(agents.orgId, orgId), eq(agents.id, id)))
-          .returning();
-        return row ?? null;
-      },
-
-      delete: async (id: string) => {
-        const rows = await tx
-          .delete(agents)
-          .where(and(eq(agents.orgId, orgId), eq(agents.id, id)))
-          .returning({ id: agents.id });
-        return rows.length > 0;
-      },
-    },
+    agents: agentsRepo(tx, orgId),
+    inventory: inventoryRepo(tx, orgId),
   };
 }
 
 export type TenantRepo = ReturnType<typeof createTenantRepo>;
+export type { InventoryFilter, InventoryItemPatch, NewInventoryItem } from "./repos/inventory";
