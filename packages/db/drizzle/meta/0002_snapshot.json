@@ -1,6 +1,6 @@
 {
-  "id": "611f7ba2-4541-42fd-97f2-2ac90aee9af4",
-  "prevId": "969b05f8-72e3-46ff-a842-0aa9ccabb319",
+  "id": "5a6cda17-034d-40e5-b754-dab359128a30",
+  "prevId": "611f7ba2-4541-42fd-97f2-2ac90aee9af4",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1396,6 +1396,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "size_bytes": {
+          "name": "size_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
         "status": {
           "name": "status",
           "type": "document_status",
@@ -1407,6 +1414,19 @@
         "error": {
           "name": "error",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chunk_count": {
+          "name": "chunk_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "processed_at": {
+          "name": "processed_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },

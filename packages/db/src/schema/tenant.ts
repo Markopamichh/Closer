@@ -98,8 +98,12 @@ export const documents = pgTable(
     sourceType: text().notNull(),
     storagePath: text(),
     mimeType: text(),
+    sizeBytes: integer().notNull().default(0),
     status: documentStatusEnum().notNull().default("pending"),
+    /** Client-safe failure reason; internals only go to the logs. */
     error: text(),
+    chunkCount: integer().notNull().default(0),
+    processedAt: timestamp({ withTimezone: true }),
     ...timestamps,
   },
   (t) => [

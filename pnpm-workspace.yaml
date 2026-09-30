@@ -6,3 +6,4 @@ packages:
 allowBuilds:
   esbuild: true
   unrs-resolver: false
+  msgpackr-extract: false

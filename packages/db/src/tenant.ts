@@ -1,7 +1,9 @@
 import { sql } from "drizzle-orm";
 import type { Db, Tx } from "./client";
 import { agentsRepo } from "./repos/agents";
+import { documentsRepo } from "./repos/documents";
 import { inventoryRepo } from "./repos/inventory";
+import { usageRepo } from "./repos/usage";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -33,8 +35,11 @@ export function createTenantRepo(tx: Tx, orgId: string) {
     orgId,
     agents: agentsRepo(tx, orgId),
     inventory: inventoryRepo(tx, orgId),
+    documents: documentsRepo(tx, orgId),
+    usage: usageRepo(tx, orgId),
   };
 }
 
 export type TenantRepo = ReturnType<typeof createTenantRepo>;
+export type { NewChunk, NewDocument } from "./repos/documents";
 export type { InventoryFilter, InventoryItemPatch, NewInventoryItem } from "./repos/inventory";
