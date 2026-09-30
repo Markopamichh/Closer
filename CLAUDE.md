@@ -75,13 +75,13 @@ Decisions: embeddings via Voyage AI `voyage-4` (1024 dims, plain `fetch`), Supab
 2. [x] Inventory CRUD (per-vertical attributes, kind immutable)
 3. [x] CSV import (all-or-nothing, dry run, upsert by external_id)
 4. [x] Document ingestion (extract → chunk → embed, worker, retries)
-5. [ ] Semantic search — in progress: `documentsRepo.searchChunks` written (iterative HNSW scan, same-model filter); next: `searchKnowledge` service, `GET /documents/search` (before `/:documentId`), embedder in `AppDeps`, tests (incl. filtered-HNSW starvation case)
+5. [x] Semantic search (`GET /documents/search`, iterative HNSW scan, same-model + ready-only filters, query tokens metered)
 6. [ ] Dark mode + EN/ES
 7. [ ] Web: Inventory page
 8. [ ] Web: Knowledge page
 9. [ ] Close: full checks, `security-review`, docs
 
-Pending outside the code: apply migration `0002` to Supabase (project `jtbrswpmnjvgkmiydvrq`), enable login for `closer_app` there, add `VOYAGE_API_KEY` to `.env`.
+Pending outside the code: apply migration `0002` to Supabase (project `jtbrswpmnjvgkmiydvrq`), enable login for `closer_app` there, add `VOYAGE_API_KEY` to `.env`, check pgvector >= 0.8 on Supabase (`hnsw.iterative_scan`).
 
 ## Testing
 
