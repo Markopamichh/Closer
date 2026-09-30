@@ -206,7 +206,36 @@ describe("semantic search", () => {
     expect((await w.a.owner.request(`${base()}/search`)).status).toBe(422);
   });
 
-  it("finds this org's chunks when another tenant's chunks crowd the HNSW candidates", async () => {
+  it("exact path (small tenants): finds a chunk the HNSW graph cannot reach", async () => {
+    // Near-duplicate bag-of-words vectors of another tenant leave nodes unreachable in
+    // the HNSW graph; only an exact scan is guaranteed to return this org's chunk.
+    const res = await w.ownerB.upload(
+      `/api/organizations/${w.orgB}/documents`,
+      fileForm("offers.md", "placeholder"),
+    );
+    const dup = (await json<{ document: DocumentDto }>(res)).document;
+    const texts = Array.from({ length: 300 }, (_, i) => `loan rates offer ${i}`);
+    const { embeddings } = await ctx.embedder.embed(texts, "document");
+    await ctx.sql`update documents set status = 'ready', chunk_count = 300 where id = ${dup.id}`;
+    const rows = texts.map((content, i) => ({
+      org_id: w.orgB,
+      document_id: dup.id,
+      chunk_index: i,
+      content,
+      token_count: 4,
+      embedding: JSON.stringify(embeddings[i]),
+      metadata: ctx.sql.json({ embeddingModel: ctx.embedder.model }),
+    }));
+    await ctx.sql`insert into chunks ${ctx.sql(rows)}`;
+    const mine = await readyDoc("Ask the loan desk about trade-in appraisals.");
+
+    const res2 = await w.a.owner.request(`${base()}/search?q=loan+rates+offer`);
+
+    const body = await json<{ results: ChunkSearchHitDto[] }>(res2);
+    expect(body.results.map((r) => r.documentId)).toContain(mine.id);
+  });
+
+  it("HNSW path (large tenants): iterative scan gets past another tenant's crowd", async () => {
     // Dense seeded vectors: the fake bag-of-words embedder produces many exact distance
     // ties, which leave HNSW nodes unreachable and would mask what this test is about.
     const random = seededRandom(42);
@@ -252,6 +281,7 @@ describe("semantic search", () => {
         embedding: query,
         embeddingModel: model,
         limit: 5,
+        exactSearchMaxChunks: 0,
       });
       return { plan: JSON.stringify(explain), hits: found };
     });

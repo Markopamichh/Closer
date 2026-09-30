@@ -33,7 +33,15 @@ export type ChunkSearch = {
   /** Only chunks embedded with this model are comparable to the query vector. */
   embeddingModel: string;
   limit: number;
+  /** Tenants up to this many chunks get exact search. Overridable for tests and tuning. */
+  exactSearchMaxChunks?: number;
 };
+
+/**
+ * Exact search costs ~3 ms per 1k vectors (measured locally), so up to 10k chunks it
+ * stays well under the query-embedding latency while guaranteeing full recall.
+ */
+export const EXACT_SEARCH_MAX_CHUNKS = 10_000;
 
 export function documentsRepo(tx: Tx, orgId: string) {
   const scope = (id: string) => and(eq(documents.orgId, orgId), eq(documents.id, id));
@@ -76,20 +84,39 @@ export function documentsRepo(tx: Tx, orgId: string) {
      * chunks exist only for ready documents, or for ones being re-processed (their previous
      * index stays searchable until replaced); a failed job deletes them with the status.
      *
-     * An HNSW index returns the k nearest vectors of the whole table and only then
-     * applies WHERE filters; if those k belong to other tenants this org gets nothing.
-     * pgvector 0.8's iterative scan keeps walking the graph until enough rows pass the
-     * filters. `relaxed_order` is faster but may return slightly out-of-order rows, so the
+     * HNSW is approximate: it can miss rows whose graph nodes are poorly connected (e.g.
+     * crowded out by near-duplicate chunks of another tenant). Small tenants therefore get
+     * an exact scan; the materialized CTE keeps the planner from using the HNSW index.
+     *
+     * Large tenants use HNSW. It returns the k nearest vectors of the whole table before
+     * applying WHERE filters, so pgvector 0.8's iterative scan keeps walking the graph until
+     * enough rows pass them. `relaxed_order` may return slightly out-of-order rows, so the
      * outer query re-sorts the candidates exactly.
      */
     searchChunks: async ({
       embedding,
       embeddingModel,
       limit,
+      exactSearchMaxChunks = EXACT_SEARCH_MAX_CHUNKS,
     }: ChunkSearch): Promise<ChunkSearchHit[]> => {
-      await tx.execute(sql`set local hnsw.iterative_scan = relaxed_order`);
-      await tx.execute(sql`set local hnsw.ef_search = 100`);
       const vector = JSON.stringify(embedding);
+      const candidates = sql`
+        select c.id as chunk_id, c.document_id, d.title as document_title, c.chunk_index,
+               c.content, c.embedding <=> ${vector}::vector as distance
+        from ${chunks} c
+        join ${documents} d on d.id = c.document_id and d.org_id = c.org_id
+        where c.org_id = ${orgId}
+          and c.metadata->>'embeddingModel' = ${embeddingModel}`;
+
+      const [size] = await tx.execute<{ chunks: number }>(sql`
+        select coalesce(sum(chunk_count), 0)::int as chunks
+        from ${documents} where org_id = ${orgId}`);
+      const exact = (size?.chunks ?? 0) <= exactSearchMaxChunks;
+
+      if (!exact) {
+        await tx.execute(sql`set local hnsw.iterative_scan = relaxed_order`);
+        await tx.execute(sql`set local hnsw.ef_search = 100`);
+      }
       const rows = await tx.execute<{
         chunk_id: string;
         document_id: string;
@@ -97,19 +124,19 @@ export function documentsRepo(tx: Tx, orgId: string) {
         chunk_index: number;
         content: string;
         distance: number;
-      }>(sql`
-        select * from (
-          select c.id as chunk_id, c.document_id, d.title as document_title, c.chunk_index,
-                 c.content, c.embedding <=> ${vector}::vector as distance
-          from ${chunks} c
-          join ${documents} d on d.id = c.document_id and d.org_id = c.org_id
-          where c.org_id = ${orgId}
-            and c.metadata->>'embeddingModel' = ${embeddingModel}
-          order by c.embedding <=> ${vector}::vector
-          limit ${limit}
-        ) candidates
-        order by distance
-      `);
+      }>(
+        exact
+          ? sql`
+              with candidates as materialized (${candidates})
+              select * from candidates order by distance limit ${limit}`
+          : sql`
+              select * from (
+                ${candidates}
+                order by c.embedding <=> ${vector}::vector
+                limit ${limit}
+              ) candidates
+              order by distance`,
+      );
       return rows.map((r) => ({
         chunkId: r.chunk_id,
         documentId: r.document_id,
