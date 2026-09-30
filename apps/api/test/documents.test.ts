@@ -180,16 +180,23 @@ describe("semantic search", () => {
     });
   });
 
-  it("does not return chunks from documents still pending (not ready)", async () => {
-    const doc = await uploadOk("pending-search.md", "# Insurance\n\nWe sell insurance policies.");
-    // doc is pending — not processed
+  it.each(["pending", "processing", "failed"])(
+    "hides the old chunks of a document that is %s again (e.g. a reprocess)",
+    async (status) => {
+      const doc = await readyDoc(`# Insurance\n\nWe sell ${status} insurance policies.`);
+      const searchIds = async () => {
+        const res = await w.a.owner.request(`${base()}/search?q=${status}+insurance+policies`);
+        expect(res.status).toBe(200);
+        return (await json<{ results: ChunkSearchHitDto[] }>(res)).results.map((r) => r.documentId);
+      };
+      expect(await searchIds()).toContain(doc.id);
 
-    const res = await w.a.owner.request(`${base()}/search?q=insurance+policies`);
-    expect(res.status).toBe(200);
-    const body = await json<{ results: ChunkSearchHitDto[] }>(res);
-    const ids = body.results.map((r) => r.documentId);
-    expect(ids).not.toContain(doc.id);
-  });
+      // A failed reprocess keeps the previous chunks; only the status hides them.
+      await ctx.sql`update documents set status = ${status} where id = ${doc.id}`;
+
+      expect(await searchIds()).not.toContain(doc.id);
+    },
+  );
 
   it("respects the limit query parameter", async () => {
     await readyDoc("# Maintenance\n\nFull oil change service.\n\nTire rotation included.");
