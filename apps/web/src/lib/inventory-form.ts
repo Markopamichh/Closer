@@ -54,6 +54,7 @@ export type FieldErrors = ReadonlySet<string>;
 
 export type BuildResult<T> = { ok: true; body: T } | { ok: false; errors: FieldErrors };
 
+// Up to 10 integer digits keeps every accepted price under the schema max (1e12 cents).
 const PRICE = /^(\d{1,10})(?:\.(\d{1,2}))?$/;
 
 /**
@@ -114,7 +115,6 @@ function readAttributes(form: FormData, kind: InventoryKind): Record<string, unk
 /** Maps a schema issue path back to the form field that produced it. */
 function fieldOf(path: readonly PropertyKey[], kind: InventoryKind): string {
   const [head, attribute] = path;
-  if (head === "priceCents") return "price";
   if (head === "attributes") {
     return kind === "generic" || attribute === undefined
       ? "genericAttributes"
