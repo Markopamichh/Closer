@@ -34,6 +34,31 @@ Portfolio project: code quality, architecture decisions and docs matter as much 
 - Code, comments and docs in English. Talk to the user in Spanish.
 - Ask before adding dependencies not already in the repo.
 
+## Working agreement (with Marko)
+
+- Act as tech lead and mentor: be direct, flag bad ideas, explain trade-offs (not basics).
+- Plan first for each week; wait for approval before implementing.
+- Before each step, say what and why; after it, summarize files touched and the decision taken (and the rejected alternative). Pause for an OK after every numbered point.
+- Announce every skill used and why. Verify tests with mutation checks: commit first, assert the mutation actually applied, then restore.
+- Run `pnpm format:check` as its own command before committing (never piped through `tail`).
+- Keep this project outside iCloud-synced folders (Desktop/Documents): sync creates `* 2` duplicates that corrupt `node_modules` and the Next.js cache.
+
+## Current status (Week 2)
+
+Decisions: embeddings via Voyage AI `voyage-4` (1024 dims, plain `fetch`), Supabase Storage (local disk driver in dev/tests), PDF + DOCX + TXT/MD, BullMQ worker as a separate process, dark mode with `next-themes`, i18n EN/ES with `next-intl` (browser detection + selector, cookie, no locale in URL).
+
+1. [x] Infra: Redis, env, storage adapters, embedding providers
+2. [x] Inventory CRUD (per-vertical attributes, kind immutable)
+3. [x] CSV import (all-or-nothing, dry run, upsert by external_id)
+4. [x] Document ingestion (extract → chunk → embed, worker, retries)
+5. [ ] Semantic search — in progress: `documentsRepo.searchChunks` written (iterative HNSW scan, same-model filter); next: `searchKnowledge` service, `GET /documents/search` (before `/:documentId`), embedder in `AppDeps`, tests (incl. filtered-HNSW starvation case)
+6. [ ] Dark mode + EN/ES
+7. [ ] Web: Inventory page
+8. [ ] Web: Knowledge page
+9. [ ] Close: full checks, `security-review`, docs
+
+Pending outside the code: apply migration `0002` to Supabase (project `jtbrswpmnjvgkmiydvrq`), enable login for `closer_app` there, add `VOYAGE_API_KEY` to `.env`.
+
 ## Testing
 
 - Tests run against a real Postgres, in a separate `<db>_test` database created and migrated by `apps/api/test/global-setup.ts`.
