@@ -46,6 +46,8 @@ export type Client = {
   userId: string;
   email: string;
   request: (path: string, init?: { method?: string; body?: unknown }) => Promise<Response>;
+  /** Multipart upload; the boundary header is set by the runtime from the FormData. */
+  upload: (path: string, form: FormData) => Promise<Response>;
 };
 
 /** A signed-in API client: signs up through Better Auth and replays the session cookie. */
@@ -72,7 +74,16 @@ export async function signUp(app: TestContext["app"], label: string): Promise<Cl
         headers: { cookie, origin: WEB_ORIGIN, "content-type": "application/json" },
         ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }),
       }),
+    upload: async (path, form) =>
+      app.request(path, { method: "POST", headers: { cookie, origin: WEB_ORIGIN }, body: form }),
   };
+}
+
+/** A FormData with a single CSV file field, as a browser would send it. */
+export function csvForm(content: string, field = "file"): FormData {
+  const form = new FormData();
+  form.append(field, new File([content], "inventory.csv", { type: "text/csv" }));
+  return form;
 }
 
 /** Unauthenticated request (no cookie). */

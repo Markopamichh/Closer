@@ -112,3 +112,22 @@ export const listInventoryQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).max(10_000).default(0),
 });
 export type ListInventoryQuery = z.infer<typeof listInventoryQuerySchema>;
+
+export const CSV_IMPORT_LIMITS = {
+  maxBytes: 5 * 1024 * 1024,
+  maxRows: 5000,
+  maxReportedErrors: 100,
+};
+
+export const csvImportResultSchema = z.object({
+  dryRun: z.boolean(),
+  /** False when any row failed validation: nothing is written (all-or-nothing). */
+  applied: z.boolean(),
+  totalRows: z.number().int(),
+  created: z.number().int(),
+  updated: z.number().int(),
+  errors: z.array(z.object({ row: z.number().int(), message: z.string() })),
+  /** True when more errors existed than were reported. */
+  errorsTruncated: z.boolean(),
+});
+export type CsvImportResult = z.infer<typeof csvImportResultSchema>;

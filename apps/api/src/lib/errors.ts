@@ -5,15 +5,17 @@ export type ErrorCode =
   | "forbidden"
   | "not_found"
   | "conflict"
+  | "payload_too_large"
   | "internal_error";
 
-const STATUS: Record<ErrorCode, 400 | 401 | 403 | 404 | 409 | 422 | 500> = {
+const STATUS: Record<ErrorCode, 400 | 401 | 403 | 404 | 409 | 413 | 422 | 500> = {
   bad_request: 400,
   validation_error: 422,
   unauthorized: 401,
   forbidden: 403,
   not_found: 404,
   conflict: 409,
+  payload_too_large: 413,
   internal_error: 500,
 };
 
