@@ -87,10 +87,12 @@ describe("processDocument", () => {
     await once(w.orgA, id);
     const first = await chunkRows(id);
 
-    await once(w.orgA, id);
+    // The second run must succeed, not merely leave the first run's rows in place.
+    expect((await once(w.orgA, id)).kind).toBe("ready");
 
     const second = await chunkRows(id);
     expect(second.map((c) => c.chunk_index)).toEqual(first.map((c) => c.chunk_index));
+    expect((await documentRow(id))?.status).toBe("ready");
   });
 
   it("refuses a job whose orgId doesn't own the document (tampered payload)", async () => {
