@@ -136,6 +136,19 @@ describe("processDocument", () => {
     expect((await documentRow(id))?.error).toMatch(/missing/);
   });
 
+  it("a failed re-process removes the previous chunks along with the status", async () => {
+    const id = await upload(w.a.owner, w.orgA, "reindex.md", longText);
+    expect((await once(w.orgA, id)).kind).toBe("ready");
+    expect((await chunkRows(id)).length).toBeGreaterThan(0);
+    await ctx.storage.delete(documentKey(w.orgA, id));
+
+    const outcome = await once(w.orgA, id);
+
+    expect(outcome.kind).toBe("failed");
+    expect(await documentRow(id)).toMatchObject({ status: "failed", chunk_count: 0 });
+    expect(await chunkRows(id)).toHaveLength(0);
+  });
+
   describe("transient failures", () => {
     const flaky: EmbeddingProvider = {
       model: "flaky",

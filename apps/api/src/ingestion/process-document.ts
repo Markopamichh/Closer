@@ -136,9 +136,11 @@ export async function processDocument(
         : err instanceof StorageNotFoundError
           ? "The uploaded file is missing. Please upload it again."
           : TRANSIENT_MESSAGE;
-    await withTenant(db, orgId, (repo) =>
-      repo.documents.update(documentId, { status: "failed", error: reason, chunkCount: 0 }),
-    );
+    // A failed re-process must not leave the previous index searchable behind a "failed" status.
+    await withTenant(db, orgId, async (repo) => {
+      await repo.documents.update(documentId, { status: "failed", error: reason, chunkCount: 0 });
+      await repo.documents.replaceChunks(documentId, []);
+    });
     return { kind: "failed", reason };
   }
 }

@@ -72,7 +72,9 @@ export function documentsRepo(tx: Tx, orgId: string) {
     },
 
     /**
-     * Nearest chunks by cosine distance, restricted to this org's ready documents.
+     * Nearest chunks by cosine distance within this org. No status filter on purpose:
+     * chunks exist only for ready documents, or for ones being re-processed (their previous
+     * index stays searchable until replaced); a failed job deletes them with the status.
      *
      * An HNSW index returns the k nearest vectors of the whole table and only then
      * applies WHERE filters; if those k belong to other tenants this org gets nothing.
@@ -102,7 +104,6 @@ export function documentsRepo(tx: Tx, orgId: string) {
           from ${chunks} c
           join ${documents} d on d.id = c.document_id and d.org_id = c.org_id
           where c.org_id = ${orgId}
-            and d.status = 'ready'
             and c.metadata->>'embeddingModel' = ${embeddingModel}
           order by c.embedding <=> ${vector}::vector
           limit ${limit}
