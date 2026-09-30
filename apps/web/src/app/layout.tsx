@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 import "./globals.css";
 import { Geist } from "next/font/google";
@@ -12,12 +14,15 @@ export const metadata: Metadata = {
   description: "AI sales agent for your business",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const locale = await getLocale();
   return (
     // next-themes sets the class on <html> before hydration.
-    <html lang="en" className={cn("font-sans", geist.variable)} suppressHydrationWarning>
+    <html lang={locale} className={cn("font-sans", geist.variable)} suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground antialiased">
-        <ThemeProvider>{children}</ThemeProvider>
+        <NextIntlClientProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

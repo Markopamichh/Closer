@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "./nav";
 
 export function Sidebar({ orgId }: { orgId: string }) {
+  const t = useTranslations("nav");
   const active = useSelectedLayoutSegment();
 
   return (
-    <nav aria-label="Main" className="grid gap-1 px-3">
-      {NAV_ITEMS.map(({ segment, label, icon: Icon }) => {
+    <nav aria-label={t("label")} className="grid gap-1 px-3">
+      {NAV_ITEMS.map(({ segment, icon: Icon }) => {
         const isActive = active === segment;
         return (
           <Link
@@ -25,7 +27,7 @@ export function Sidebar({ orgId }: { orgId: string }) {
             )}
           >
             <Icon className="size-4" aria-hidden />
-            {label}
+            {t(`${segment}.label`)}
           </Link>
         );
       })}

@@ -1,11 +1,12 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { CreateOrgForm } from "@/components/orgs/create-org-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getOrganizations } from "@/lib/api-server";
 
 export default async function SelectOrgPage() {
-  const organizations = await getOrganizations();
+  const [organizations, t] = await Promise.all([getOrganizations(), getTranslations()]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
@@ -13,8 +14,8 @@ export default async function SelectOrgPage() {
         {organizations.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Choose an organization</CardTitle>
-              <CardDescription>Pick the workspace you want to open.</CardDescription>
+              <CardTitle>{t("orgs.chooseTitle")}</CardTitle>
+              <CardDescription>{t("orgs.chooseDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-2">
               {organizations.map((org) => (
@@ -25,7 +26,9 @@ export default async function SelectOrgPage() {
                 >
                   <span>
                     <span className="block font-medium">{org.name}</span>
-                    <span className="text-sm capitalize text-muted-foreground">{org.role}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {t(`common.roles.${org.role}`)}
+                    </span>
                   </span>
                   <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
                 </Link>
@@ -36,9 +39,9 @@ export default async function SelectOrgPage() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {organizations.length > 0 ? "New organization" : "Create your organization"}
+              {organizations.length > 0 ? t("orgs.newTitle") : t("orgs.firstTitle")}
             </CardTitle>
-            <CardDescription>You will be its owner and can invite your team.</CardDescription>
+            <CardDescription>{t("orgs.createDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <CreateOrgForm />

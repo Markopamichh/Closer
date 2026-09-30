@@ -1,6 +1,7 @@
 "use client";
 
 import { createdOrganizationSchema, createOrganizationSchema } from "@closer/shared";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FormError } from "@/components/auth/form-error";
@@ -10,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { apiPost } from "@/lib/api-client";
 
 export function CreateOrgForm() {
+  const t = useTranslations("orgs");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -20,7 +22,7 @@ export function CreateOrgForm() {
       name: new FormData(event.currentTarget).get("name"),
     });
     if (!parsed.success) {
-      setError("Name must be between 2 and 80 characters");
+      setError(t("nameInvalid"));
       return;
     }
     setPending(true);
@@ -29,7 +31,7 @@ export function CreateOrgForm() {
       const org = await apiPost("/api/organizations", parsed.data, createdOrganizationSchema);
       router.push(`/dashboard/${org.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create the organization");
+      setError(err instanceof Error ? err.message : t("failed"));
       setPending(false);
     }
   }
@@ -37,12 +39,12 @@ export function CreateOrgForm() {
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="grid gap-3" noValidate>
       <div className="grid gap-2">
-        <Label htmlFor="org-name">Business name</Label>
-        <Input id="org-name" name="name" placeholder="Acme Motors" required />
+        <Label htmlFor="org-name">{t("name")}</Label>
+        <Input id="org-name" name="name" placeholder={t("namePlaceholder")} required />
       </div>
       <FormError message={error} />
       <Button type="submit" disabled={pending}>
-        {pending ? "Creating…" : "Create organization"}
+        {pending ? t("submitting") : t("submit")}
       </Button>
     </form>
   );

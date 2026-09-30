@@ -2,6 +2,7 @@
 
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +20,7 @@ export function OrgSwitcher({
   current: OrganizationSummary;
   organizations: OrganizationSummary[];
 }) {
+  const t = useTranslations();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -27,17 +29,19 @@ export function OrgSwitcher({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold">{current.name}</span>
-          <span className="block text-xs capitalize text-muted-foreground">{current.role}</span>
+          <span className="block text-xs text-muted-foreground">
+            {t(`common.roles.${current.role}`)}
+          </span>
         </span>
         <ChevronsUpDown className="size-4 text-muted-foreground" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-60">
-        <DropdownMenuLabel>Organizations</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("orgs.switcherLabel")}</DropdownMenuLabel>
         {organizations.map((org) => (
           <DropdownMenuItem key={org.id} asChild>
             <Link href={`/dashboard/${org.id}`} className="flex items-center justify-between">
               <span className="truncate">{org.name}</span>
-              {org.id === current.id && <Check className="size-4" aria-label="Current" />}
+              {org.id === current.id && <Check className="size-4" aria-label={t("orgs.current")} />}
             </Link>
           </DropdownMenuItem>
         ))}
@@ -45,7 +49,7 @@ export function OrgSwitcher({
         <DropdownMenuItem asChild>
           <Link href="/select-org">
             <Plus className="size-4" aria-hidden />
-            New organization
+            {t("orgs.newTitle")}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>

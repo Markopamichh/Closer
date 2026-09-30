@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { OrgSwitcher } from "@/components/dashboard/org-switcher";
 import { Sidebar } from "@/components/dashboard/sidebar";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { Preferences } from "@/components/preferences";
 import { UserMenu } from "@/components/dashboard/user-menu";
 import { Separator } from "@/components/ui/separator";
 import { getMe, getOrganizations } from "@/lib/api-server";
@@ -31,7 +31,7 @@ export default async function DashboardLayout({
         <header className="flex h-14 items-center justify-between border-b px-6">
           <span className="text-sm text-muted-foreground md:hidden">{current.name}</span>
           <div className="ml-auto flex items-center gap-2">
-            <ThemeToggle />
+            <Preferences />
             <UserMenu name={user.name} email={user.email} />
           </div>
         </header>

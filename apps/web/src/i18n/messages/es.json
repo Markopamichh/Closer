@@ -1,0 +1,89 @@
+{
+  "common": {
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "theme": "Cambiar tema",
+    "themes": { "light": "Claro", "dark": "Oscuro", "system": "Sistema" },
+    "language": "Cambiar idioma",
+    "roles": { "owner": "Propietario", "agent": "Agente", "viewer": "Lector" }
+  },
+  "login": {
+    "title": "Iniciar sesión",
+    "description": "Hola de nuevo. Inicia sesión en tu espacio de trabajo.",
+    "submit": "Iniciar sesión",
+    "submitting": "Iniciando sesión…",
+    "noAccount": "¿No tienes cuenta?",
+    "createOne": "Crea una",
+    "failed": "Correo o contraseña incorrectos"
+  },
+  "register": {
+    "title": "Crea tu cuenta",
+    "description": "Configura Closer para tu negocio en un minuto.",
+    "name": "Nombre completo",
+    "email": "Correo de trabajo",
+    "submit": "Crear cuenta",
+    "submitting": "Creando cuenta…",
+    "haveAccount": "¿Ya tienes cuenta?",
+    "signIn": "Inicia sesión",
+    "failed": "No se pudo crear la cuenta",
+    "errors": {
+      "name": "El nombre es obligatorio",
+      "email": "Ingresa un correo válido",
+      "password": "La contraseña debe tener al menos 10 caracteres"
+    }
+  },
+  "orgs": {
+    "chooseTitle": "Elige una organización",
+    "chooseDescription": "Selecciona el espacio de trabajo que quieres abrir.",
+    "newTitle": "Nueva organización",
+    "firstTitle": "Crea tu organización",
+    "createDescription": "Serás su propietario y podrás invitar a tu equipo.",
+    "name": "Nombre del negocio",
+    "namePlaceholder": "Automotores Acme",
+    "nameInvalid": "El nombre debe tener entre 2 y 80 caracteres",
+    "submit": "Crear organización",
+    "submitting": "Creando…",
+    "failed": "No se pudo crear la organización",
+    "switcherLabel": "Organizaciones",
+    "current": "Actual"
+  },
+  "invitation": {
+    "title": "Unirse a la organización",
+    "description": "Te invitaron a unirte a un espacio de trabajo en Closer.",
+    "submit": "Aceptar invitación",
+    "submitting": "Uniéndote…",
+    "failed": "No se pudo aceptar esta invitación"
+  },
+  "userMenu": { "label": "Menú de la cuenta", "signOut": "Cerrar sesión" },
+  "nav": {
+    "label": "Principal",
+    "conversations": {
+      "label": "Conversaciones",
+      "description": "Chats en vivo y anteriores entre tu agente de IA y los visitantes."
+    },
+    "leads": {
+      "label": "Leads",
+      "description": "Prospectos calificados, su puntaje y quién les da seguimiento."
+    },
+    "inventory": {
+      "label": "Inventario",
+      "description": "Los vehículos, propiedades o productos de los que puede hablar tu agente."
+    },
+    "knowledge": {
+      "label": "Conocimiento",
+      "description": "Documentos que el agente usa para responder con precisión."
+    },
+    "agent": {
+      "label": "Agente",
+      "description": "Personalidad, tono y reglas de tu agente de ventas con IA."
+    },
+    "settings": {
+      "label": "Configuración",
+      "description": "Datos de la organización, miembros del equipo y facturación."
+    }
+  },
+  "placeholder": {
+    "title": "Llega en la semana {week}",
+    "description": "Esta sección es parte del roadmap y todavía no está construida."
+  }
+}

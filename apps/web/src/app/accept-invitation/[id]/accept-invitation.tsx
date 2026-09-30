@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FormError } from "@/components/auth/form-error";
@@ -8,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { authClient } from "@/lib/auth-client";
 
 export function AcceptInvitation({ invitationId }: { invitationId: string }) {
+  const t = useTranslations("invitation");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -19,7 +21,7 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
       invitationId,
     });
     if (acceptError) {
-      setError(acceptError.message ?? "This invitation could not be accepted");
+      setError(acceptError.message ?? t("failed"));
       setPending(false);
       return;
     }
@@ -29,13 +31,13 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Join organization</CardTitle>
-        <CardDescription>You have been invited to join a workspace on Closer.</CardDescription>
+        <CardTitle>{t("title")}</CardTitle>
+        <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         <FormError message={error} />
         <Button onClick={() => void accept()} disabled={pending}>
-          {pending ? "Joining…" : "Accept invitation"}
+          {pending ? t("submitting") : t("submit")}
         </Button>
       </CardContent>
     </Card>

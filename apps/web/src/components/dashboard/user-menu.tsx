@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOut } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -22,6 +23,7 @@ function initials(name: string) {
 }
 
 export function UserMenu({ name, email }: { name: string; email: string }) {
+  const t = useTranslations("userMenu");
   const router = useRouter();
 
   async function signOut() {
@@ -33,7 +35,7 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label="Account menu"
+        aria-label={t("label")}
         className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Avatar className="size-8">
@@ -48,7 +50,7 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void signOut()}>
           <LogOut className="size-4" aria-hidden />
-          Sign out
+          {t("signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
