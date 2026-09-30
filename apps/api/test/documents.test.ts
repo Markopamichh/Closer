@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import type { ChunkSearchHitDto, DocumentDto } from "@closer/shared";
+import { sql, withTenant } from "@closer/db";
 import { Worker } from "bullmq";
 import { Redis } from "ioredis";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -203,36 +204,92 @@ describe("semantic search", () => {
     expect((await w.a.owner.request(`${base()}/search`)).status).toBe(422);
   });
 
-  it("records the query embedding tokens as usage for the org", async () => {
-    const res = await w.a.viewer.request(`${base()}/search?q=metering+probe+query`);
-    expect(res.status).toBe(200);
-    const rows = await ctx.sql`
-      select quantity::int as quantity from usage_events
-      where org_id = ${w.orgA} and type = 'embedding' and metadata->>'source' = 'search'
-      order by created_at desc limit 1`;
-    expect(rows[0]?.quantity).toBe(3);
+  it("finds this org's chunks when another tenant's chunks crowd the HNSW candidates", async () => {
+    // Dense seeded vectors: the fake bag-of-words embedder produces many exact distance
+    // ties, which leave HNSW nodes unreachable and would mask what this test is about.
+    const random = seededRandom(42);
+    const unit = (v: number[]) => {
+      const norm = Math.hypot(...v);
+      return v.map((x) => x / norm);
+    };
+    const randomUnit = () => unit(Array.from({ length: 1024 }, () => random() - 0.5));
+    const near = (base: number[], noise: number) => {
+      const n = randomUnit();
+      return unit(base.map((x, i) => x + noise * (n[i] ?? 0)));
+    };
+    const query = randomUnit();
+    const model = ctx.embedder.model;
+
+    // 300 chunks of org B, all closer to the query than anything org A has.
+    await ctx.sql`update documents set status = 'ready' where id = ${w.docB.id}`;
+    const crowd = Array.from({ length: 300 }, (_, i) => ({
+      org_id: w.orgB,
+      document_id: w.docB.id,
+      chunk_index: i,
+      content: `crowd ${i}`,
+      token_count: 2,
+      embedding: JSON.stringify(near(query, 0.2 + 0.3 * random())),
+      metadata: ctx.sql.json({ embeddingModel: model }),
+    }));
+    await ctx.sql`insert into chunks ${ctx.sql(crowd)}`;
+    const mine = await readyDoc("Our financing office is open nine to five.");
+    await ctx.sql`
+      update chunks set embedding = ${JSON.stringify(near(query, 1.5))}::vector
+      where document_id = ${mine.id}`;
+    await ctx.sql`analyze chunks`;
+
+    const { plan, hits } = await withTenant(ctx.db, w.orgA, async (repo, tx) => {
+      // Force the HNSW path; the org_id btree + exact sort cannot starve.
+      await tx.execute(sql`set local enable_seqscan = off`);
+      await tx.execute(sql`set local enable_bitmapscan = off`);
+      await tx.execute(sql`set local enable_sort = off`);
+      const explain = await tx.execute(sql`
+        explain select id from chunks where org_id = ${w.orgA}
+        order by embedding <=> ${JSON.stringify(query)}::vector limit 5`);
+      const found = await repo.documents.searchChunks({
+        embedding: query,
+        embeddingModel: model,
+        limit: 5,
+      });
+      return { plan: JSON.stringify(explain), hits: found };
+    });
+
+    expect(plan).toContain("chunks_embedding_idx");
+    expect(hits.map((h) => h.documentId)).toContain(mine.id);
   });
 
-  it("filters out chunks whose embeddingModel differs from the query model (starvation guard)", async () => {
-    const doc = await uploadOk(
-      "stale-model.md",
-      "# Trade-in\n\nWe accept trade-ins at market value.",
-    );
-    await processDocument(
-      { db: ctx.db, storage: ctx.storage, embedder: ctx.embedder, logger: ctx.logger },
-      { orgId: w.orgA, documentId: doc.id, attempt: 1, maxAttempts: 1 },
-    );
+  it("records the query embedding tokens as usage for the org", async () => {
+    const searchUsage = async () => {
+      const [row] = await ctx.sql<{ n: number; total: number }[]>`
+        select count(*)::int as n, coalesce(sum(quantity), 0)::int as total from usage_events
+        where org_id = ${w.orgA} and type = 'embedding' and metadata->>'source' = 'search'`;
+      return row;
+    };
+    const before = await searchUsage();
 
-    // Simulate a model change by overwriting the stored embeddingModel metadata so the
-    // chunks look like they came from a different provider.
-    await ctx.sql`update chunks set metadata = metadata || '{"embeddingModel":"old-model-v1"}'::jsonb where document_id = ${doc.id}`;
+    const res = await w.a.viewer.request(`${base()}/search?q=metering+probe+query`);
 
-    // The route embeds with fake-bow-1024; those chunks now claim old-model-v1 — must be excluded.
-    const res = await w.a.owner.request(`${base()}/search?q=trade-in+market+value`);
     expect(res.status).toBe(200);
-    const body = await json<{ results: ChunkSearchHitDto[] }>(res);
-    const ids = body.results.map((r) => r.documentId);
-    expect(ids).not.toContain(doc.id);
+    const after = await searchUsage();
+    expect(after?.n).toBe((before?.n ?? 0) + 1);
+    expect(after?.total).toBe((before?.total ?? 0) + 3);
+  });
+
+  it("excludes chunks embedded with a different model than the query", async () => {
+    const doc = await readyDoc("# Trade-in\n\nWe accept trade-ins at market value.");
+    const searchIds = async () => {
+      const res = await w.a.owner.request(`${base()}/search?q=trade-ins+market+value`);
+      expect(res.status).toBe(200);
+      return (await json<{ results: ChunkSearchHitDto[] }>(res)).results.map((r) => r.documentId);
+    };
+    expect(await searchIds()).toContain(doc.id);
+
+    // Vectors from another model live in a different space: comparing them is meaningless.
+    await ctx.sql`
+      update chunks set metadata = metadata || '{"embeddingModel":"old-model-v1"}'::jsonb
+      where document_id = ${doc.id}`;
+
+    expect(await searchIds()).not.toContain(doc.id);
   });
 });
 
@@ -262,3 +319,14 @@ describe("end to end through the queue", () => {
     }
   });
 });
+
+/** mulberry32: deterministic so vector-search tests are reproducible. */
+function seededRandom(seed: number): () => number {
+  let a = seed;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
