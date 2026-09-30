@@ -16,7 +16,11 @@ export const vehicleAttributesSchema = z
   .object({
     make: z.string().trim().min(1).max(60),
     model: z.string().trim().min(1).max(60),
-    year: z.number().int().min(1900).max(new Date().getFullYear() + 1),
+    year: z
+      .number()
+      .int()
+      .min(1900)
+      .max(new Date().getFullYear() + 1),
     mileageKm: nonNegativeInt.optional(),
     fuel: z.enum(["gasoline", "diesel", "hybrid", "electric", "other"]).optional(),
     transmission: z.enum(["manual", "automatic"]).optional(),
