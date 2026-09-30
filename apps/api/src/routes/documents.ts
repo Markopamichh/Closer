@@ -163,12 +163,14 @@ export function documentRoutes(deps: {
       const embedding = embeddings[0];
       if (!embedding) throw new AppError("internal_error", "Embedding failed");
 
-      const results = await withTenant(db, orgId, async (repo) => {
+      const { strategy, hits } = await withTenant(db, orgId, async (repo) => {
         await repo.usage.record("embedding", tokens, { source: "search", model: embedder.model });
         return repo.documents.searchChunks({ embedding, embeddingModel: embedder.model, limit });
       });
 
-      return c.json({ results });
+      // The query itself stays out of the logs: it is end-user text.
+      c.get("logger").info({ strategy, limit, results: hits.length }, "knowledge search");
+      return c.json({ results: hits });
     },
   );
 

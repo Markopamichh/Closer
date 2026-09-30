@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import type { ChunkSearchHitDto, DocumentDto } from "@closer/shared";
+import type { Tx } from "@closer/db";
 import { sql, withTenant } from "@closer/db";
 import { Worker } from "bullmq";
 import { Redis } from "ioredis";
@@ -206,38 +207,9 @@ describe("semantic search", () => {
     expect((await w.a.owner.request(`${base()}/search`)).status).toBe(422);
   });
 
-  it("exact path (small tenants): finds a chunk the HNSW graph cannot reach", async () => {
-    // Near-duplicate bag-of-words vectors of another tenant leave nodes unreachable in
-    // the HNSW graph; only an exact scan is guaranteed to return this org's chunk.
-    const res = await w.ownerB.upload(
-      `/api/organizations/${w.orgB}/documents`,
-      fileForm("offers.md", "placeholder"),
-    );
-    const dup = (await json<{ document: DocumentDto }>(res)).document;
-    const texts = Array.from({ length: 300 }, (_, i) => `loan rates offer ${i}`);
-    const { embeddings } = await ctx.embedder.embed(texts, "document");
-    await ctx.sql`update documents set status = 'ready', chunk_count = 300 where id = ${dup.id}`;
-    const rows = texts.map((content, i) => ({
-      org_id: w.orgB,
-      document_id: dup.id,
-      chunk_index: i,
-      content,
-      token_count: 4,
-      embedding: JSON.stringify(embeddings[i]),
-      metadata: ctx.sql.json({ embeddingModel: ctx.embedder.model }),
-    }));
-    await ctx.sql`insert into chunks ${ctx.sql(rows)}`;
-    const mine = await readyDoc("Ask the loan desk about trade-in appraisals.");
-
-    const res2 = await w.a.owner.request(`${base()}/search?q=loan+rates+offer`);
-
-    const body = await json<{ results: ChunkSearchHitDto[] }>(res2);
-    expect(body.results.map((r) => r.documentId)).toContain(mine.id);
-  });
-
-  it("HNSW path (large tenants): iterative scan gets past another tenant's crowd", async () => {
-    // Dense seeded vectors: the fake bag-of-words embedder produces many exact distance
-    // ties, which leave HNSW nodes unreachable and would mask what this test is about.
+  describe("search strategy under another tenant's crowd", () => {
+    // Dense seeded vectors: the bag-of-words fake embedder yields exact distance ties,
+    // which make HNSW graph reachability depend on unrelated rows and the tests flaky.
     const random = seededRandom(42);
     const unit = (v: number[]) => {
       const norm = Math.hypot(...v);
@@ -249,45 +221,56 @@ describe("semantic search", () => {
       return unit(base.map((x, i) => x + noise * (n[i] ?? 0)));
     };
     const query = randomUnit();
-    const model = ctx.embedder.model;
+    let mine: DocumentDto;
 
-    // 300 chunks of org B, all closer to the query than anything org A has.
-    await ctx.sql`update documents set status = 'ready' where id = ${w.docB.id}`;
-    const crowd = Array.from({ length: 300 }, (_, i) => ({
-      org_id: w.orgB,
-      document_id: w.docB.id,
-      chunk_index: i,
-      content: `crowd ${i}`,
-      token_count: 2,
-      embedding: JSON.stringify(near(query, 0.2 + 0.3 * random())),
-      metadata: ctx.sql.json({ embeddingModel: model }),
-    }));
-    await ctx.sql`insert into chunks ${ctx.sql(crowd)}`;
-    const mine = await readyDoc("Our financing office is open nine to five.");
-    await ctx.sql`
-      update chunks set embedding = ${JSON.stringify(near(query, 1.5))}::vector
-      where document_id = ${mine.id}`;
-    await ctx.sql`analyze chunks`;
-
-    const { plan, hits } = await withTenant(ctx.db, w.orgA, async (repo, tx) => {
-      // Force the HNSW path; the org_id btree + exact sort cannot starve.
-      await tx.execute(sql`set local enable_seqscan = off`);
-      await tx.execute(sql`set local enable_bitmapscan = off`);
-      await tx.execute(sql`set local enable_sort = off`);
-      const explain = await tx.execute(sql`
-        explain select id from chunks where org_id = ${w.orgA}
-        order by embedding <=> ${JSON.stringify(query)}::vector limit 5`);
-      const found = await repo.documents.searchChunks({
-        embedding: query,
-        embeddingModel: model,
-        limit: 5,
-        exactSearchMaxChunks: 0,
-      });
-      return { plan: JSON.stringify(explain), hits: found };
+    beforeAll(async () => {
+      // 300 chunks of org B, all closer to the query than anything org A has.
+      await ctx.sql`update documents set status = 'ready' where id = ${w.docB.id}`;
+      const crowd = Array.from({ length: 300 }, (_, i) => ({
+        org_id: w.orgB,
+        document_id: w.docB.id,
+        chunk_index: i,
+        content: `crowd ${i}`,
+        token_count: 2,
+        embedding: JSON.stringify(near(query, 0.2 + 0.3 * random())),
+        metadata: ctx.sql.json({ embeddingModel: ctx.embedder.model }),
+      }));
+      await ctx.sql`insert into chunks ${ctx.sql(crowd)}`;
+      mine = await readyDoc("Our financing office is open nine to five.");
+      await ctx.sql`
+        update chunks set embedding = ${JSON.stringify(near(query, 1.5))}::vector
+        where document_id = ${mine.id}`;
+      await ctx.sql`analyze chunks`;
     });
 
-    expect(plan).toContain("chunks_embedding_idx");
-    expect(hits.map((h) => h.documentId)).toContain(mine.id);
+    const search = (exactSearchMaxChunks?: number) =>
+      withTenant(ctx.db, w.orgA, async (repo, tx) => {
+        await preferIndexScans(tx);
+        const explain = await tx.execute(sql`
+          explain select id from chunks where org_id = ${w.orgA}
+          order by embedding <=> ${JSON.stringify(query)}::vector limit 5`);
+        const { strategy, hits } = await repo.documents.searchChunks({
+          embedding: query,
+          embeddingModel: ctx.embedder.model,
+          limit: 5,
+          ...(exactSearchMaxChunks === undefined ? {} : { exactSearchMaxChunks }),
+        });
+        return { plan: JSON.stringify(explain), strategy, ids: hits.map((h) => h.documentId) };
+      });
+
+    it("HNSW path (large tenants): the iterative scan gets past the crowd", async () => {
+      const { plan, strategy, ids } = await search(0);
+      expect(plan).toContain("chunks_embedding_idx");
+      expect(strategy).toBe("hnsw");
+      expect(ids).toContain(mine.id);
+    });
+
+    it("exact path (small tenants): full recall even when the planner prefers HNSW", async () => {
+      const { plan, strategy, ids } = await search();
+      expect(plan).toContain("chunks_embedding_idx");
+      expect(strategy).toBe("exact");
+      expect(ids).toContain(mine.id);
+    });
   });
 
   it("records the query embedding tokens as usage for the org", async () => {
@@ -351,6 +334,13 @@ describe("end to end through the queue", () => {
     }
   });
 });
+
+/** Push the planner towards the HNSW index, the case where approximate search can miss rows. */
+async function preferIndexScans(tx: Tx) {
+  await tx.execute(sql`set local enable_seqscan = off`);
+  await tx.execute(sql`set local enable_bitmapscan = off`);
+  await tx.execute(sql`set local enable_sort = off`);
+}
 
 /** mulberry32: deterministic so vector-search tests are reproducible. */
 function seededRandom(seed: number): () => number {

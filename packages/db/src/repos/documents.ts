@@ -37,6 +37,12 @@ export type ChunkSearch = {
   exactSearchMaxChunks?: number;
 };
 
+export type ChunkSearchResult = {
+  /** Which path answered, so a missed result can be traced back to approximate search. */
+  strategy: "exact" | "hnsw";
+  hits: ChunkSearchHit[];
+};
+
 /**
  * Exact search costs ~3 ms per 1k vectors (measured locally), so up to 10k chunks it
  * stays well under the query-embedding latency while guaranteeing full recall.
@@ -98,7 +104,7 @@ export function documentsRepo(tx: Tx, orgId: string) {
       embeddingModel,
       limit,
       exactSearchMaxChunks = EXACT_SEARCH_MAX_CHUNKS,
-    }: ChunkSearch): Promise<ChunkSearchHit[]> => {
+    }: ChunkSearch): Promise<ChunkSearchResult> => {
       const vector = JSON.stringify(embedding);
       const candidates = sql`
         select c.id as chunk_id, c.document_id, d.title as document_title, c.chunk_index,
@@ -137,14 +143,17 @@ export function documentsRepo(tx: Tx, orgId: string) {
               ) candidates
               order by distance`,
       );
-      return rows.map((r) => ({
-        chunkId: r.chunk_id,
-        documentId: r.document_id,
-        documentTitle: r.document_title,
-        chunkIndex: r.chunk_index,
-        content: r.content,
-        score: 1 - r.distance,
-      }));
+      return {
+        strategy: exact ? "exact" : "hnsw",
+        hits: rows.map((r) => ({
+          chunkId: r.chunk_id,
+          documentId: r.document_id,
+          documentTitle: r.document_title,
+          chunkIndex: r.chunk_index,
+          content: r.content,
+          score: 1 - r.distance,
+        })),
+      };
     },
 
     /**
