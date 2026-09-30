@@ -159,13 +159,14 @@ export function documentRoutes(deps: {
       const { orgId } = c.get("membership");
       const { q, limit } = c.req.valid("query");
 
-      const { embeddings } = await embedder.embed([q], "query");
+      const { embeddings, tokens } = await embedder.embed([q], "query");
       const embedding = embeddings[0];
       if (!embedding) throw new AppError("internal_error", "Embedding failed");
 
-      const results = await withTenant(db, orgId, (repo) =>
-        repo.documents.searchChunks({ embedding, embeddingModel: embedder.model, limit }),
-      );
+      const results = await withTenant(db, orgId, async (repo) => {
+        await repo.usage.record("embedding", tokens, { source: "search", model: embedder.model });
+        return repo.documents.searchChunks({ embedding, embeddingModel: embedder.model, limit });
+      });
 
       return c.json({ results });
     },

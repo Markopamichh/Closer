@@ -203,6 +203,16 @@ describe("semantic search", () => {
     expect((await w.a.owner.request(`${base()}/search`)).status).toBe(422);
   });
 
+  it("records the query embedding tokens as usage for the org", async () => {
+    const res = await w.a.viewer.request(`${base()}/search?q=metering+probe+query`);
+    expect(res.status).toBe(200);
+    const rows = await ctx.sql`
+      select quantity::int as quantity from usage_events
+      where org_id = ${w.orgA} and type = 'embedding' and metadata->>'source' = 'search'
+      order by created_at desc limit 1`;
+    expect(rows[0]?.quantity).toBe(3);
+  });
+
   it("filters out chunks whose embeddingModel differs from the query model (starvation guard)", async () => {
     const doc = await uploadOk(
       "stale-model.md",
