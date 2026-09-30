@@ -1,8 +1,9 @@
 import "server-only";
-import type { OrganizationSummary } from "@closer/shared";
-import { meSchema, organizationListSchema } from "@closer/shared";
+import type { ListInventoryQuery, OrganizationSummary } from "@closer/shared";
+import { inventoryPageSchema, meSchema, organizationListSchema } from "@closer/shared";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import type { ZodType } from "zod";
 import { serverEnv } from "./server-env";
 
@@ -26,5 +27,20 @@ async function apiGet<T>(path: string, schema: ZodType<T>): Promise<T> {
 
 export const getMe = () => apiGet("/api/me", meSchema);
 
-export const getOrganizations = async () =>
-  (await apiGet("/api/organizations", organizationListSchema)).organizations;
+// Deduplicated per request: the dashboard layout and its pages both need it.
+export const getOrganizations = cache(
+  async () => (await apiGet("/api/organizations", organizationListSchema)).organizations,
+);
+
+type InventoryQuery = { [K in keyof ListInventoryQuery]?: ListInventoryQuery[K] | undefined };
+
+export function getInventory(orgId: string, query: InventoryQuery) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries<string | number | undefined>(query)) {
+    if (value !== undefined) params.set(key, String(value));
+  }
+  return apiGet(
+    `/api/organizations/${encodeURIComponent(orgId)}/inventory?${params}`,
+    inventoryPageSchema,
+  );
+}

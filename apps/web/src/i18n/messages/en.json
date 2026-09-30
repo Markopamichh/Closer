@@ -3,9 +3,17 @@
     "email": "Email",
     "password": "Password",
     "theme": "Change theme",
-    "themes": { "light": "Light", "dark": "Dark", "system": "System" },
+    "themes": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
     "language": "Change language",
-    "roles": { "owner": "Owner", "agent": "Agent", "viewer": "Viewer" }
+    "roles": {
+      "owner": "Owner",
+      "agent": "Agent",
+      "viewer": "Viewer"
+    }
   },
   "login": {
     "title": "Sign in",
@@ -54,7 +62,10 @@
     "submitting": "Joining…",
     "failed": "This invitation could not be accepted"
   },
-  "userMenu": { "label": "Account menu", "signOut": "Sign out" },
+  "userMenu": {
+    "label": "Account menu",
+    "signOut": "Sign out"
+  },
   "nav": {
     "label": "Main",
     "conversations": {
@@ -85,5 +96,47 @@
   "placeholder": {
     "title": "Coming in week {week}",
     "description": "This section is part of the roadmap and is not built yet."
+  },
+  "inventory": {
+    "searchLabel": "Search",
+    "searchPlaceholder": "Title or external ID",
+    "apply": "Apply",
+    "clear": "Clear",
+    "allStatuses": "All statuses",
+    "allKinds": "All kinds",
+    "statusLabel": "Status",
+    "kindLabel": "Kind",
+    "statuses": {
+      "available": "Available",
+      "reserved": "Reserved",
+      "sold": "Sold",
+      "archived": "Archived"
+    },
+    "kinds": {
+      "vehicle": "Vehicle",
+      "property": "Property",
+      "generic": "Other"
+    },
+    "columns": {
+      "item": "Item",
+      "kind": "Kind",
+      "details": "Details",
+      "price": "Price",
+      "status": "Status"
+    },
+    "noPrice": "No price",
+    "operation": {
+      "sale": "For sale",
+      "rent": "For rent"
+    },
+    "bedrooms": "{count, plural, one {# bedroom} other {# bedrooms}}",
+    "emptyTitle": "No items yet",
+    "emptyDescription": "Add items one by one or import a CSV to get your agent started.",
+    "noResultsTitle": "No items match these filters",
+    "noResultsDescription": "Try a different search or clear the filters.",
+    "range": "{from}–{to} of {total}",
+    "previous": "Previous",
+    "next": "Next",
+    "pagination": "Pagination"
   }
 }

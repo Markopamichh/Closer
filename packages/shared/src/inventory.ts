@@ -131,3 +131,27 @@ export const csvImportResultSchema = z.object({
   errorsTruncated: z.boolean(),
 });
 export type CsvImportResult = z.infer<typeof csvImportResultSchema>;
+
+/** Item as the web reads it; unknown fields in the API response are stripped. */
+export const inventoryItemSchema = z.object({
+  id: z.uuid(),
+  kind: z.enum(INVENTORY_KINDS),
+  externalId: z.string().nullable(),
+  title: z.string(),
+  description: z.string().nullable(),
+  priceCents: z.number().int().nullable(),
+  currency: z.string(),
+  status: z.enum(INVENTORY_STATUSES),
+  attributes: z.record(z.string(), z.unknown()),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type InventoryItemDto = z.infer<typeof inventoryItemSchema>;
+
+export const inventoryPageSchema = z.object({
+  items: z.array(inventoryItemSchema),
+  total: z.number().int(),
+  limit: z.number().int(),
+  offset: z.number().int(),
+});
+export type InventoryPage = z.infer<typeof inventoryPageSchema>;

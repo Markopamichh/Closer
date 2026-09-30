@@ -3,9 +3,17 @@
     "email": "Correo electrónico",
     "password": "Contraseña",
     "theme": "Cambiar tema",
-    "themes": { "light": "Claro", "dark": "Oscuro", "system": "Sistema" },
+    "themes": {
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Sistema"
+    },
     "language": "Cambiar idioma",
-    "roles": { "owner": "Propietario", "agent": "Agente", "viewer": "Lector" }
+    "roles": {
+      "owner": "Propietario",
+      "agent": "Agente",
+      "viewer": "Lector"
+    }
   },
   "login": {
     "title": "Iniciar sesión",
@@ -54,7 +62,10 @@
     "submitting": "Uniéndote…",
     "failed": "No se pudo aceptar esta invitación"
   },
-  "userMenu": { "label": "Menú de la cuenta", "signOut": "Cerrar sesión" },
+  "userMenu": {
+    "label": "Menú de la cuenta",
+    "signOut": "Cerrar sesión"
+  },
   "nav": {
     "label": "Principal",
     "conversations": {
@@ -85,5 +96,47 @@
   "placeholder": {
     "title": "Llega en la semana {week}",
     "description": "Esta sección es parte del roadmap y todavía no está construida."
+  },
+  "inventory": {
+    "searchLabel": "Buscar",
+    "searchPlaceholder": "Título o ID externo",
+    "apply": "Aplicar",
+    "clear": "Limpiar",
+    "allStatuses": "Todos los estados",
+    "allKinds": "Todos los tipos",
+    "statusLabel": "Estado",
+    "kindLabel": "Tipo",
+    "statuses": {
+      "available": "Disponible",
+      "reserved": "Reservado",
+      "sold": "Vendido",
+      "archived": "Archivado"
+    },
+    "kinds": {
+      "vehicle": "Vehículo",
+      "property": "Propiedad",
+      "generic": "Otro"
+    },
+    "columns": {
+      "item": "Ítem",
+      "kind": "Tipo",
+      "details": "Detalles",
+      "price": "Precio",
+      "status": "Estado"
+    },
+    "noPrice": "Sin precio",
+    "operation": {
+      "sale": "En venta",
+      "rent": "En alquiler"
+    },
+    "bedrooms": "{count, plural, one {# dormitorio} other {# dormitorios}}",
+    "emptyTitle": "Todavía no hay ítems",
+    "emptyDescription": "Agrega ítems uno por uno o importa un CSV para que tu agente empiece a trabajar.",
+    "noResultsTitle": "Ningún ítem coincide con estos filtros",
+    "noResultsDescription": "Prueba otra búsqueda o limpia los filtros.",
+    "range": "{from}–{to} de {total}",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "pagination": "Paginación"
   }
 }
