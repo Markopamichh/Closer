@@ -76,7 +76,7 @@ Decisions: embeddings via Voyage AI `voyage-4` (1024 dims, plain `fetch`), Supab
 3. [x] CSV import (all-or-nothing, dry run, upsert by external_id)
 4. [x] Document ingestion (extract → chunk → embed, worker, retries)
 5. [x] Semantic search (`GET /documents/search`): exact scan for tenants up to 10k chunks, HNSW + iterative scan above; same-model filter; chunks exist only while searchable (deleted on failed ingestion, kept during re-processing); query tokens metered
-6. [ ] Dark mode + EN/ES
+6. [x] Dark mode + EN/ES (cookie > Accept-Language > en; key parity and typed keys enforced by typecheck). API error messages are still English: translate by error code when forms get richer
 7. [ ] Web: Inventory page
 8. [ ] Web: Knowledge page
 9. [ ] Close: full checks, `security-review`, docs
