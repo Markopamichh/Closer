@@ -493,9 +493,8 @@ describe("inventory roles and org scoping", () => {
 
   it("A's search never returns B's items, even for B's exact external id", async () => {
     const res = await w.a.owner.request(`${inventoryPath()}?q=VIN-SHARED-001`);
-    const { items } = await json<{ items: { id: string; orgId: string }[] }>(res);
+    const { items } = await json<{ items: { id: string }[] }>(res);
     expect(items.map((i) => i.id)).toEqual([w.itemA.id]);
-    expect(items.every((i) => i.orgId === w.orgA)).toBe(true);
   });
 });
 

@@ -1,6 +1,6 @@
 import type { Db } from "@closer/db";
 import { isUniqueViolation, withTenant } from "@closer/db";
-import type { CsvImportResult, InventoryKind } from "@closer/shared";
+import type { CsvImportResult, InventoryItemDto, InventoryKind } from "@closer/shared";
 import {
   ATTRIBUTE_SCHEMAS,
   CSV_IMPORT_LIMITS,
@@ -42,6 +42,33 @@ const importQuerySchema = z.object({
     .transform((v) => v === "true"),
 });
 
+type ItemRow = Omit<InventoryItemDto, "kind" | "createdAt" | "updatedAt"> & {
+  kind: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+/** Public shape: org_id and other internal columns stay out of responses. */
+const toDto = (item: ItemRow): InventoryItemDto => ({
+  id: item.id,
+  kind: knownKind(item.kind),
+  externalId: item.externalId,
+  title: item.title,
+  description: item.description,
+  priceCents: item.priceCents,
+  currency: item.currency,
+  status: item.status,
+  attributes: item.attributes,
+  createdAt: item.createdAt.toISOString(),
+  updatedAt: item.updatedAt.toISOString(),
+});
+
+/** The column is text; a value outside the enum is a broken invariant, not user input. */
+function knownKind(kind: string): InventoryKind {
+  if (!isInventoryKind(kind)) throw new Error(`Unknown inventory kind in database: ${kind}`);
+  return kind;
+}
+
 function isInventoryKind(value: string): value is InventoryKind {
   return (INVENTORY_KINDS as readonly string[]).includes(value);
 }
@@ -63,7 +90,12 @@ export function inventoryRoutes({ auth, db }: { auth: Auth; db: Db }) {
       const { orgId } = c.get("membership");
       const filter = c.req.valid("query");
       const page = await withTenant(db, orgId, (repo) => repo.inventory.list(filter));
-      return c.json({ ...page, limit: filter.limit, offset: filter.offset });
+      return c.json({
+        items: page.items.map(toDto),
+        total: page.total,
+        limit: filter.limit,
+        offset: filter.offset,
+      });
     },
   );
 
@@ -77,7 +109,7 @@ export function inventoryRoutes({ auth, db }: { auth: Auth; db: Db }) {
       const item = await mapConflicts(() =>
         withTenant(db, orgId, (repo) => repo.inventory.create(input)),
       );
-      return c.json({ item }, 201);
+      return c.json({ item: toDto(item) }, 201);
     },
   );
 
@@ -168,7 +200,7 @@ export function inventoryRoutes({ auth, db }: { auth: Auth; db: Db }) {
     const itemId = resourceId(c.req.param("itemId"), "Item");
     const item = await withTenant(db, orgId, (repo) => repo.inventory.get(itemId));
     if (!item) throw notFound("Item");
-    return c.json({ item });
+    return c.json({ item: toDto(item) });
   });
 
   r.patch(
@@ -204,7 +236,7 @@ export function inventoryRoutes({ auth, db }: { auth: Auth; db: Db }) {
         }),
       );
       if (!item) throw notFound("Item");
-      return c.json({ item });
+      return c.json({ item: toDto(item) });
     },
   );
 

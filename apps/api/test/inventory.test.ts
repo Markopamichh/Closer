@@ -1,3 +1,4 @@
+import { inventoryItemSchema, inventoryPageSchema } from "@closer/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { World } from "./fixtures";
 import { buildWorld } from "./fixtures";
@@ -242,4 +243,28 @@ describe("listing items", () => {
       expect(res.status).toBe(422);
     },
   );
+});
+
+describe("response shape", () => {
+  it("every endpoint returns the public item shape, never org_id", async () => {
+    const created = await create(car("Shape check", { externalId: `SHAPE-${Date.now()}` }));
+    const { item } = await json<{ item: Record<string, unknown> }>(created);
+    const path = `${base()}/${String(item.id)}`;
+    const responses = [
+      item,
+      (await json<{ item: unknown }>(await owner().request(path))).item,
+      (
+        await json<{ item: unknown }>(
+          await owner().request(path, { method: "PATCH", body: { status: "reserved" } }),
+        )
+      ).item,
+    ];
+    for (const body of responses) {
+      expect(body).not.toHaveProperty("orgId");
+      expect(inventoryItemSchema.strict().safeParse(body).success).toBe(true);
+    }
+    const page = await json<{ items: Record<string, unknown>[] }>(await owner().request(base()));
+    expect(page.items.some((i) => "orgId" in i)).toBe(false);
+    expect(inventoryPageSchema.safeParse(page).success).toBe(true);
+  });
 });
