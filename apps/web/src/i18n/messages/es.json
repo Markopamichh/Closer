@@ -210,7 +210,12 @@
       "cancel": "Cancelar",
       "save": "Guardar",
       "saving": "Guardando…",
-      "create": "Crear ítem"
+      "create": "Crear ítem",
+      "delete": "Eliminar ítem",
+      "deleteConfirm": "¿Eliminar este ítem de forma permanente? Para conservar su historial pero ocultarlo de tu agente, márcalo como Archivado.",
+      "deleteYes": "Sí, eliminar",
+      "deleting": "Eliminando…",
+      "deleteFailed": "No se pudo eliminar el ítem"
     },
     "import": {
       "button": "Importar CSV",

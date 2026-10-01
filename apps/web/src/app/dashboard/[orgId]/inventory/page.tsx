@@ -35,6 +35,7 @@ export default async function InventoryPage({
   // UI only: the API enforces the same rule (owners and agents write).
   const role = organizations.find((org) => org.id === orgId)?.role;
   const canWrite = role === "owner" || role === "agent";
+  const canDelete = role === "owner";
   const basePath = `/dashboard/${orgId}/inventory`;
   const filtered = Boolean(filters.q ?? filters.status ?? filters.kind);
 
@@ -78,7 +79,12 @@ export default async function InventoryPage({
         </div>
       ) : (
         <>
-          <InventoryTable items={page.items} orgId={orgId} canWrite={canWrite} />
+          <InventoryTable
+            items={page.items}
+            orgId={orgId}
+            canWrite={canWrite}
+            canDelete={canDelete}
+          />
           <nav aria-label={t("pagination")} className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground tabular-nums">
               {t("range", { from, to, total: page.total })}

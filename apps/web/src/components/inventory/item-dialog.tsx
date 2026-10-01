@@ -22,7 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ApiError, apiSend } from "@/lib/api-client";
+import { ApiError, apiDelete, apiSend } from "@/lib/api-client";
 import type { AttributeField } from "@/lib/inventory-form";
 import {
   ATTRIBUTE_FIELDS,
@@ -43,7 +43,15 @@ function attributeValue(item: InventoryItemDto | undefined, name: string): strin
   return typeof value === "string" || typeof value === "number" ? String(value) : "";
 }
 
-export function ItemDialog({ orgId, item }: { orgId: string; item?: InventoryItemDto }) {
+export function ItemDialog({
+  orgId,
+  item,
+  canDelete = false,
+}: {
+  orgId: string;
+  item?: InventoryItemDto;
+  canDelete?: boolean;
+}) {
   const t = useTranslations("inventory");
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -51,6 +59,7 @@ export function ItemDialog({ orgId, item }: { orgId: string; item?: InventoryIte
   const [problems, setProblems] = useState<ReadonlyMap<string, Problem>>(new Map());
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   // Widened on purpose: option labels are looked up by field name at runtime.
   const messages = useMessages();
   const optionLabels: Record<string, Record<string, string> | undefined> =
@@ -62,6 +71,23 @@ export function ItemDialog({ orgId, item }: { orgId: string; item?: InventoryIte
       setKind(item?.kind ?? "vehicle");
       setProblems(new Map());
       setError(null);
+      setConfirmingDelete(false);
+    }
+  }
+
+  async function onDelete() {
+    if (!item) return;
+    setPending(true);
+    setError(null);
+    try {
+      await apiDelete(`/api/organizations/${encodeURIComponent(orgId)}/inventory/${item.id}`);
+      setOpen(false);
+      router.refresh();
+    } catch {
+      setError(t("form.deleteFailed"));
+      setConfirmingDelete(false);
+    } finally {
+      setPending(false);
     }
   }
 
@@ -299,7 +325,48 @@ export function ItemDialog({ orgId, item }: { orgId: string; item?: InventoryIte
           )}
 
           <FormError message={error} />
+          {confirmingDelete && (
+            <div
+              role="alert"
+              className="grid gap-3 rounded-md border border-destructive/40 p-3 text-sm"
+            >
+              <p>{t("form.deleteConfirm")}</p>
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setConfirmingDelete(false);
+                  }}
+                >
+                  {t("form.cancel")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={pending}
+                  onClick={() => void onDelete()}
+                >
+                  {pending ? t("form.deleting") : t("form.deleteYes")}
+                </Button>
+              </div>
+            </div>
+          )}
           <DialogFooter>
+            {item && canDelete && !confirmingDelete && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-destructive hover:text-destructive sm:mr-auto"
+                onClick={() => {
+                  setConfirmingDelete(true);
+                }}
+              >
+                {t("form.delete")}
+              </Button>
+            )}
             <DialogClose asChild>
               <Button type="button" variant="outline">
                 {t("form.cancel")}

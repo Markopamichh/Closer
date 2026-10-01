@@ -67,10 +67,12 @@ export async function InventoryTable({
   items,
   orgId,
   canWrite,
+  canDelete,
 }: {
   items: InventoryItemDto[];
   orgId: string;
   canWrite: boolean;
+  canDelete: boolean;
 }) {
   const [t, format] = await Promise.all([getTranslations("inventory"), getFormatter()]);
   return (
@@ -107,7 +109,7 @@ export async function InventoryTable({
               </TableCell>
               {canWrite && (
                 <TableCell>
-                  <ItemDialog orgId={orgId} item={item} />
+                  <ItemDialog orgId={orgId} item={item} canDelete={canDelete} />
                 </TableCell>
               )}
             </TableRow>

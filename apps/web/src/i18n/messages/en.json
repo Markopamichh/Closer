@@ -210,7 +210,12 @@
       "cancel": "Cancel",
       "save": "Save",
       "saving": "Saving…",
-      "create": "Create item"
+      "create": "Create item",
+      "delete": "Delete item",
+      "deleteConfirm": "Delete this item permanently? To keep its history but hide it from your agent, mark it as Archived instead.",
+      "deleteYes": "Yes, delete",
+      "deleting": "Deleting…",
+      "deleteFailed": "Could not delete the item"
     },
     "import": {
       "button": "Import CSV",

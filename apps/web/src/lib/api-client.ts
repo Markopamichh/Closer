@@ -63,3 +63,10 @@ export async function apiUpload<T>(
   const error = errorBody(data);
   throw new ApiError(res.status, error?.code, error?.message ?? `Request failed (${res.status})`);
 }
+
+export async function apiDelete(path: string): Promise<void> {
+  const res = await fetch(path, { method: "DELETE" });
+  if (res.ok) return;
+  const error = errorBody(await res.json().catch(() => null));
+  throw new ApiError(res.status, error?.code, error?.message ?? `Request failed (${res.status})`);
+}
