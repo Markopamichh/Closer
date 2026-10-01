@@ -81,7 +81,7 @@ Decisions: embeddings via Voyage AI `voyage-4` (1024 dims, plain `fetch`), Supab
 8. [x] Web: Knowledge page (upload with client checks, auto-refresh only while processing, reprocess/delete, client-side "test your knowledge" search so refreshes never re-bill embeddings)
 9. [x] Close: build/lint/typecheck/tests green, two `security-review` passes (no findings), inventory DTO, per-org search rate limit (30/min, fail-open), README
 
-Pending outside the code: apply migrations `0002`–`0003` to Supabase (project `jtbrswpmnjvgkmiydvrq`; `0003` aborts if pgvector < 0.8), enable login for `closer_app` there, create the private storage bucket. Voyage free tier without a payment method is 3 requests/min: add one before demos.
+Supabase (project `jtbrswpmnjvgkmiydvrq`) is set up: migrations `0000`–`0003` applied (pgvector 0.8.2), `closer_app` login enabled and verified under RLS, private `documents` bucket verified with the real adapter. Credentials live in the git-ignored `.env.supabase` (`set -a; source .env.supabase; set +a` before `pnpm db:migrate`); local dev and tests keep using Docker via `.env`. Still pending: add a payment method to Voyage before demos (free tier is 3 requests/min).
 
 ## Testing
 
