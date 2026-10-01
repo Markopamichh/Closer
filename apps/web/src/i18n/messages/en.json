@@ -211,6 +211,25 @@
       "save": "Save",
       "saving": "Saving…",
       "create": "Create item"
+    },
+    "import": {
+      "button": "Import CSV",
+      "title": "Import inventory from CSV",
+      "description": "Each row is matched by external_id: new IDs are created and existing ones updated. If any row has a problem, nothing is imported.",
+      "template": "Download template",
+      "file": "CSV file",
+      "fileHelp": "Up to {rows} rows and {mb} MB.",
+      "tooLarge": "The file is larger than {mb} MB.",
+      "validate": "Validate",
+      "validating": "Validating…",
+      "summary": "{total, plural, one {# row} other {# rows}}: {created} new, {updated} updated.",
+      "errorsTitle": "{count, plural, one {# row has a problem} other {# rows have problems}}. Fix the file and validate again.",
+      "errorsTruncated": "Only the first {count} problems are shown.",
+      "row": "Row {row}",
+      "import": "Import {total, plural, one {# row} other {# rows}}",
+      "importing": "Importing…",
+      "failed": "The file could not be processed",
+      "cancel": "Cancel"
     }
   }
 }

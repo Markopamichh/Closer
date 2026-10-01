@@ -3,6 +3,7 @@ import { Package } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { InventoryFilters } from "@/components/inventory/inventory-filters";
+import { ImportDialog } from "@/components/inventory/import-dialog";
 import { InventoryTable } from "@/components/inventory/inventory-table";
 import { ItemDialog } from "@/components/inventory/item-dialog";
 import { Button } from "@/components/ui/button";
@@ -55,7 +56,12 @@ export default async function InventoryPage({
           <h1 className="text-2xl font-semibold tracking-tight">{tNav("label")}</h1>
           <p className="text-sm text-muted-foreground">{tNav("description")}</p>
         </div>
-        {canWrite && <ItemDialog orgId={orgId} />}
+        {canWrite && (
+          <div className="flex gap-2">
+            <ImportDialog orgId={orgId} />
+            <ItemDialog orgId={orgId} />
+          </div>
+        )}
       </header>
 
       <InventoryFilters basePath={basePath} {...filters} />

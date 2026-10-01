@@ -211,6 +211,25 @@
       "save": "Guardar",
       "saving": "Guardando…",
       "create": "Crear ítem"
+    },
+    "import": {
+      "button": "Importar CSV",
+      "title": "Importar inventario desde CSV",
+      "description": "Cada fila se identifica por external_id: los IDs nuevos se crean y los existentes se actualizan. Si alguna fila tiene un problema, no se importa nada.",
+      "template": "Descargar plantilla",
+      "file": "Archivo CSV",
+      "fileHelp": "Hasta {rows} filas y {mb} MB.",
+      "tooLarge": "El archivo supera los {mb} MB.",
+      "validate": "Validar",
+      "validating": "Validando…",
+      "summary": "{total, plural, one {# fila} other {# filas}}: {created} nuevas, {updated} actualizadas.",
+      "errorsTitle": "{count, plural, one {# fila tiene un problema} other {# filas tienen problemas}}. Corrige el archivo y vuelve a validar.",
+      "errorsTruncated": "Solo se muestran los primeros {count} problemas.",
+      "row": "Fila {row}",
+      "import": "Importar {total, plural, one {# fila} other {# filas}}",
+      "importing": "Importando…",
+      "failed": "No se pudo procesar el archivo",
+      "cancel": "Cancelar"
     }
   }
 }

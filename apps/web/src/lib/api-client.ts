@@ -43,3 +43,23 @@ function errorBody(data: unknown): { code?: string; message?: string } | undefin
     message: "message" in error && typeof error.message === "string" ? error.message : undefined,
   };
 }
+
+/**
+ * Multipart upload. `bodyStatuses` are non-2xx statuses whose body is still a valid
+ * result (e.g. a CSV report with row errors comes back as 422).
+ */
+export async function apiUpload<T>(
+  path: string,
+  form: FormData,
+  schema: ZodType<T>,
+  bodyStatuses: readonly number[] = [],
+): Promise<T> {
+  const res = await fetch(path, { method: "POST", body: form });
+  const data: unknown = await res.json().catch(() => null);
+  if (res.ok || bodyStatuses.includes(res.status)) {
+    const parsed = schema.safeParse(data);
+    if (parsed.success) return parsed.data;
+  }
+  const error = errorBody(data);
+  throw new ApiError(res.status, error?.code, error?.message ?? `Request failed (${res.status})`);
+}
