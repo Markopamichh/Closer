@@ -120,8 +120,8 @@ API logs (`email verification requested`, `invitation created`).
 
 1. Create a project and copy the **Session pooler** connection string
    (Connect → Session pooler). Use it as `DATABASE_URL` and run `pnpm db:migrate`.
-   Search needs pgvector 0.8 or newer: a migration upgrades the extension when possible and
-   aborts with a clear message otherwise.
+   Search needs pgvector 0.8 or newer: a migration aborts with a clear message
+   otherwise (upgrade it under Database → Extensions).
 2. The migrations create the `closer_app` role without login. Enable it in the SQL editor
    with a password of your own:
    ```sql
