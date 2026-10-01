@@ -63,7 +63,7 @@ Announce every skill used (which one and why). This file wins over a skill; flag
 
 - Plan first for each week; wait for approval before implementing.
 - Before each step, say what and why; after it, summarize files touched and the decision taken (and the rejected alternative). Pause for an OK after every numbered point.
-- Announce every skill used and why. Verify tests with mutation checks: commit first, assert the mutation actually applied, then restore.
+- Announce every skill used and why. Verify tests with mutation checks: commit first, assert the mutation actually applied, then restore. Run them in a throwaway `git worktree` under /tmp (copy `.env`, delete it after): mutating files under a running `pnpm dev` leaves broken modules in its cache.
 - Run `pnpm format:check` as its own command before committing (never piped through `tail`).
 - Keep this project outside iCloud-synced folders (Desktop/Documents): sync creates `* 2` duplicates that corrupt `node_modules` and the Next.js cache.
 
