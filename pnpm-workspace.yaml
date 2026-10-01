@@ -7,3 +7,6 @@ allowBuilds:
   esbuild: true
   unrs-resolver: false
   msgpackr-extract: false
+  # Pulled in by next-intl's optional message extractor (unused); prebuilt binaries suffice.
+  "@parcel/watcher": false
+  "@swc/core": false
