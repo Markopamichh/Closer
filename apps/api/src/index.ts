@@ -1,10 +1,12 @@
 import { createDb } from "@closer/db";
 import { serve } from "@hono/node-server";
+import { Redis } from "ioredis";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
 import { loadEnv } from "./env";
 import { createEmbedder } from "./lib/embedder";
 import { createLogger } from "./lib/logger";
+import { createRedisRateLimiter } from "./lib/rate-limit";
 import { createStorage } from "./lib/storage";
 import { createDocumentQueue } from "./queue/documents";
 
@@ -13,6 +15,10 @@ const logger = createLogger(env);
 const { db, close } = createDb(env.DATABASE_APP_URL);
 const auth = createAuth({ db, env, logger });
 const documents = createDocumentQueue(env.REDIS_URL, env.QUEUE_PREFIX);
+// Default retry settings (unlike BullMQ's connection), so a Redis outage fails fast and the
+// limiter can fail open instead of hanging the request.
+const redis = new Redis(env.REDIS_URL);
+const SEARCHES_PER_MINUTE = 30;
 const app = createApp({
   db,
   auth,
@@ -20,6 +26,11 @@ const app = createApp({
   storage: createStorage(env),
   documentQueue: documents.queue,
   embedder: createEmbedder(env, logger),
+  searchLimiter: createRedisRateLimiter(redis, {
+    prefix: env.QUEUE_PREFIX,
+    limit: SEARCHES_PER_MINUTE,
+    windowSeconds: 60,
+  }),
 });
 
 const server = serve({ fetch: app.fetch, port: env.API_PORT }, (info) => {
@@ -30,7 +41,9 @@ const server = serve({ fetch: app.fetch, port: env.API_PORT }, (info) => {
 function shutdown(signal: string) {
   logger.info({ signal }, "shutting down");
   server.close(() => {
-    void Promise.allSettled([close(), documents.close()]).finally(() => process.exit(0));
+    void Promise.allSettled([close(), documents.close(), redis.quit()]).finally(() =>
+      process.exit(0),
+    );
   });
 }
 process.on("SIGTERM", () => {

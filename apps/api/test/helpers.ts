@@ -2,12 +2,15 @@ import type { EmbeddingProvider } from "@closer/ai";
 import { createFakeEmbedder } from "@closer/ai";
 import type { Db } from "@closer/db";
 import { createDb } from "@closer/db";
+import { Redis } from "ioredis";
 import postgres from "postgres";
 import { createApp } from "../src/app";
 import { createAuth } from "../src/auth";
 import { loadEnv } from "../src/env";
 import type { Logger } from "../src/lib/logger";
 import { createLogger } from "../src/lib/logger";
+import type { RateLimiter } from "../src/lib/rate-limit";
+import { createRedisRateLimiter } from "../src/lib/rate-limit";
 import type { FileStorage } from "../src/lib/storage";
 import { createStorage } from "../src/lib/storage";
 import type { DocumentQueue } from "../src/queue/documents";
@@ -28,7 +31,9 @@ export type TestContext = {
   close: () => Promise<void>;
 };
 
-export function createTestContext(overrides: { embedder?: EmbeddingProvider } = {}): TestContext {
+export function createTestContext(
+  overrides: { embedder?: EmbeddingProvider; searchLimiter?: RateLimiter } = {},
+): TestContext {
   const env = loadEnv();
   const logger = createLogger(env);
   const { db, close: closeDb } = createDb(env.DATABASE_APP_URL, { max: 5 });
@@ -37,7 +42,16 @@ export function createTestContext(overrides: { embedder?: EmbeddingProvider } = 
   const documents = createDocumentQueue(env.REDIS_URL, env.QUEUE_PREFIX);
   const documentQueue = documents.queue;
   const embedder = overrides.embedder ?? createFakeEmbedder();
-  const app = createApp({ db, auth, logger, storage, documentQueue, embedder });
+  const redis = new Redis(env.REDIS_URL);
+  // A unique prefix per context keeps counters from leaking between test files.
+  const searchLimiter =
+    overrides.searchLimiter ??
+    createRedisRateLimiter(redis, {
+      prefix: `${env.QUEUE_PREFIX}:${crypto.randomUUID()}`,
+      limit: 1000,
+      windowSeconds: 60,
+    });
+  const app = createApp({ db, auth, logger, storage, documentQueue, embedder, searchLimiter });
   const ownerUrl = process.env.DATABASE_URL;
   if (!ownerUrl) throw new Error("DATABASE_URL missing");
   const sql = postgres(ownerUrl, { max: 2, onnotice: () => undefined });
@@ -51,7 +65,7 @@ export function createTestContext(overrides: { embedder?: EmbeddingProvider } = 
     embedder,
     logger,
     close: async () => {
-      await Promise.all([closeDb(), sql.end(), documents.close()]);
+      await Promise.all([closeDb(), sql.end(), documents.close(), redis.quit()]);
     },
   };
 }

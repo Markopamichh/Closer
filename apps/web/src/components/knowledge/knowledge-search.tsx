@@ -40,7 +40,8 @@ export function KnowledgeSearch({ orgId }: { orgId: string }) {
       setResults(body.results);
       setOffline(isOfflineEmbedder(body.model));
     } catch (err) {
-      setError(err instanceof ApiError && err.status === 503 ? t("unavailable") : t("failed"));
+      const status = err instanceof ApiError ? err.status : undefined;
+      setError(status === 429 ? t("rateLimited") : status === 503 ? t("unavailable") : t("failed"));
     } finally {
       setPending(false);
     }

@@ -284,7 +284,8 @@
       "chunk": "Fragmento {index}",
       "offline": "Modo desarrollo: la búsqueda usa un embedder de prueba basado en palabras, no en significado. Configura VOYAGE_API_KEY para resultados reales.",
       "failed": "No se pudo completar la búsqueda",
-      "unavailable": "La búsqueda está ocupada en este momento. Prueba de nuevo en un minuto."
+      "unavailable": "La búsqueda está ocupada en este momento. Prueba de nuevo en un minuto.",
+      "rateLimited": "Llegaste al límite de búsquedas de este minuto. Prueba de nuevo en un momento."
     }
   }
 }

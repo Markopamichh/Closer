@@ -12,6 +12,7 @@ import type { Auth } from "../auth";
 import { DOCUMENT_FORMATS, detectFormat } from "../ingestion/extract";
 import { AppError, notFound } from "../lib/errors";
 import { resourceId } from "../lib/params";
+import type { RateLimiter } from "../lib/rate-limit";
 import type { FileStorage } from "../lib/storage";
 import { documentKey } from "../lib/storage";
 import type { AuthVariables } from "../middleware/require-auth";
@@ -71,8 +72,9 @@ export function documentRoutes(deps: {
   storage: FileStorage;
   documentQueue: DocumentQueue;
   embedder: EmbeddingProvider;
+  searchLimiter: RateLimiter;
 }) {
-  const { auth, db, storage, documentQueue, embedder } = deps;
+  const { auth, db, storage, documentQueue, embedder, searchLimiter } = deps;
   const r = new Hono<{ Variables: AuthVariables }>();
 
   r.use("*", requireAuth(auth));
@@ -159,6 +161,19 @@ export function documentRoutes(deps: {
     async (c) => {
       const { orgId } = c.get("membership");
       const { q, limit } = c.req.valid("query");
+
+      // Checked before embedding, so a rejected request costs nothing and records no usage.
+      let quota;
+      try {
+        quota = await searchLimiter.consume(`search:${orgId}`);
+      } catch (err) {
+        // Fail open: a Redis outage should not take search down with it.
+        c.get("logger").warn({ err }, "search rate limiter unavailable; allowing request");
+      }
+      if (quota && !quota.allowed) {
+        c.header("Retry-After", String(quota.retryAfterSeconds));
+        throw new AppError("rate_limited", "Too many searches, try again shortly");
+      }
 
       let embedded;
       try {

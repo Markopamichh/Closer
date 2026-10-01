@@ -5,6 +5,7 @@ import { requestId } from "hono/request-id";
 import type { Auth } from "./auth";
 import type { BaseVariables } from "./lib/context";
 import type { Logger } from "./lib/logger";
+import type { RateLimiter } from "./lib/rate-limit";
 import type { FileStorage } from "./lib/storage";
 import { errorHandler } from "./middleware/error-handler";
 import { requestContext } from "./middleware/request-context";
@@ -23,6 +24,8 @@ export type AppDeps = {
   storage: FileStorage;
   documentQueue: DocumentQueue;
   embedder: EmbeddingProvider;
+  /** Per-org limit on paid query embeddings. */
+  searchLimiter: RateLimiter;
 };
 
 /** Builds the HTTP app from its dependencies, so tests can inject their own. */
