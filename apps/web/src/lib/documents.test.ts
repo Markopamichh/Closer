@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkUpload, isProcessing } from "./documents";
+import { canReprocess, checkUpload, isProcessing } from "./documents";
 
 describe("checkUpload", () => {
   it.each(["policy.pdf", "FAQ.MD", "notes.txt", "warranty.docx"])("accepts %s", (name) => {
@@ -33,5 +33,16 @@ describe("isProcessing", () => {
   it("is false once every document has finished, failed included", () => {
     expect(isProcessing([{ status: "ready" }, { status: "failed" }])).toBe(false);
     expect(isProcessing([])).toBe(false);
+  });
+});
+
+describe("canReprocess", () => {
+  it.each([
+    ["ready", true],
+    ["failed", true],
+    ["pending", false],
+    ["processing", false],
+  ] as const)("%s → %s", (status, expected) => {
+    expect(canReprocess(status)).toBe(expected);
   });
 });

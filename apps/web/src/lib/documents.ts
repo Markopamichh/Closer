@@ -15,3 +15,7 @@ export function checkUpload(file: Pick<File, "name" | "size">): UploadProblem | 
 /** Keep refreshing only while some document is still moving through the worker. */
 export const isProcessing = (documents: Pick<DocumentDto, "status">[]) =>
   documents.some((d) => d.status === "pending" || d.status === "processing");
+
+/** Mirrors the API: a document already queued or processing can't be re-queued (409). */
+export const canReprocess = (status: DocumentDto["status"]) =>
+  status === "ready" || status === "failed";

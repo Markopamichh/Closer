@@ -262,6 +262,15 @@
     },
     "emptyTitle": "No documents yet",
     "emptyDescription": "Upload FAQs, policies or brochures so your agent can answer with your own information.",
-    "refreshing": "Updating while documents are processed…"
+    "refreshing": "Updating while documents are processed…",
+    "actions": "Actions for {title}",
+    "reprocess": "Reprocess",
+    "delete": "Delete",
+    "deleteTitle": "Delete document?",
+    "deleteDescription": "“{title}” and everything your agent learned from it will be removed. This can't be undone.",
+    "deleteYes": "Delete document",
+    "deleting": "Deleting…",
+    "cancel": "Cancel",
+    "actionFailed": "The action could not be completed"
   }
 }

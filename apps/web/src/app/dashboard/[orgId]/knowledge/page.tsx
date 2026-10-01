@@ -17,6 +17,7 @@ export default async function KnowledgePage({ params }: PageProps<"/dashboard/[o
   // UI only: the API enforces the same rule (owners and agents upload).
   const role = organizations.find((org) => org.id === orgId)?.role;
   const canWrite = role === "owner" || role === "agent";
+  const canDelete = role === "owner";
   const processing = isProcessing(documents);
 
   return (
@@ -45,7 +46,12 @@ export default async function KnowledgePage({ params }: PageProps<"/dashboard/[o
           <p className="max-w-sm text-sm text-muted-foreground">{t("emptyDescription")}</p>
         </div>
       ) : (
-        <DocumentsTable documents={documents} />
+        <DocumentsTable
+          documents={documents}
+          orgId={orgId}
+          canWrite={canWrite}
+          canDelete={canDelete}
+        />
       )}
     </div>
   );

@@ -2,6 +2,7 @@ import type { DocumentDto, DocumentStatus } from "@closer/shared";
 import { getFormatter, getTranslations } from "next-intl/server";
 import type { ComponentProps } from "react";
 import { Badge } from "@/components/ui/badge";
+import { DocumentActions } from "./document-actions";
 import {
   Table,
   TableBody,
@@ -18,7 +19,17 @@ const STATUS_VARIANT = {
   failed: "destructive",
 } as const satisfies Record<DocumentStatus, ComponentProps<typeof Badge>["variant"]>;
 
-export async function DocumentsTable({ documents }: { documents: DocumentDto[] }) {
+export async function DocumentsTable({
+  documents,
+  orgId,
+  canWrite,
+  canDelete,
+}: {
+  documents: DocumentDto[];
+  orgId: string;
+  canWrite: boolean;
+  canDelete: boolean;
+}) {
   const [t, format] = await Promise.all([getTranslations("knowledge"), getFormatter()]);
   return (
     <div className="rounded-lg border">
@@ -30,6 +41,7 @@ export async function DocumentsTable({ documents }: { documents: DocumentDto[] }
             <TableHead className="text-right">{t("columns.chunks")}</TableHead>
             <TableHead className="hidden text-right md:table-cell">{t("columns.size")}</TableHead>
             <TableHead className="hidden md:table-cell">{t("columns.added")}</TableHead>
+            {canWrite && <TableHead className="w-12" />}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -55,6 +67,11 @@ export async function DocumentsTable({ documents }: { documents: DocumentDto[] }
               <TableCell className="hidden text-muted-foreground md:table-cell">
                 {format.dateTime(new Date(doc.createdAt), { dateStyle: "medium" })}
               </TableCell>
+              {canWrite && (
+                <TableCell>
+                  <DocumentActions orgId={orgId} document={doc} canDelete={canDelete} />
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>

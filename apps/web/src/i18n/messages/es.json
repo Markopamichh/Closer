@@ -262,6 +262,15 @@
     },
     "emptyTitle": "Todavía no hay documentos",
     "emptyDescription": "Sube preguntas frecuentes, políticas o folletos para que tu agente responda con tu propia información.",
-    "refreshing": "Actualizando mientras se procesan los documentos…"
+    "refreshing": "Actualizando mientras se procesan los documentos…",
+    "actions": "Acciones para {title}",
+    "reprocess": "Reprocesar",
+    "delete": "Eliminar",
+    "deleteTitle": "¿Eliminar documento?",
+    "deleteDescription": "Se eliminará “{title}” y todo lo que tu agente aprendió de él. No se puede deshacer.",
+    "deleteYes": "Eliminar documento",
+    "deleting": "Eliminando…",
+    "cancel": "Cancelar",
+    "actionFailed": "No se pudo completar la acción"
   }
 }
