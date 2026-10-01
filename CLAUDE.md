@@ -78,10 +78,10 @@ Decisions: embeddings via Voyage AI `voyage-4` (1024 dims, plain `fetch`), Supab
 5. [x] Semantic search (`GET /documents/search`): exact scan for tenants up to 10k chunks, HNSW + iterative scan above; same-model filter; chunks exist only while searchable (deleted on failed ingestion, kept during re-processing); query tokens metered
 6. [x] Dark mode + EN/ES (cookie > Accept-Language > en; key parity and typed keys enforced by typecheck). API error messages are still English: translate by error code when forms get richer
 7. [x] Web: Inventory page (URL filters + pagination, create/edit dialog per kind, CSV import with dry-run preview, owner-only delete; web has Vitest for pure logic)
-8. [ ] Web: Knowledge page
+8. [x] Web: Knowledge page (upload with client checks, auto-refresh only while processing, reprocess/delete, client-side "test your knowledge" search so refreshes never re-bill embeddings)
 9. [ ] Close: full checks, `security-review`, docs
 
-Pending outside the code: apply migrations `0002`–`0003` to Supabase (project `jtbrswpmnjvgkmiydvrq`; `0003` aborts if pgvector < 0.8), enable login for `closer_app` there, add `VOYAGE_API_KEY` to `.env`.
+Pending outside the code: apply migrations `0002`–`0003` to Supabase (project `jtbrswpmnjvgkmiydvrq`; `0003` aborts if pgvector < 0.8), enable login for `closer_app` there.
 
 ## Testing
 
