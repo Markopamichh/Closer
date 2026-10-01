@@ -2,6 +2,7 @@ import { BookOpen } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { AutoRefresh } from "@/components/knowledge/auto-refresh";
 import { DocumentsTable } from "@/components/knowledge/documents-table";
+import { KnowledgeSearch } from "@/components/knowledge/knowledge-search";
 import { UploadButton } from "@/components/knowledge/upload-button";
 import { getDocuments, getOrganizations } from "@/lib/api-server";
 import { isProcessing } from "@/lib/documents";
@@ -53,6 +54,8 @@ export default async function KnowledgePage({ params }: PageProps<"/dashboard/[o
           canDelete={canDelete}
         />
       )}
+
+      {documents.some((d) => d.status === "ready") && <KnowledgeSearch orgId={orgId} />}
     </div>
   );
 }

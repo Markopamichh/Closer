@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canReprocess, checkUpload, isProcessing } from "./documents";
+import { canReprocess, checkUpload, isOfflineEmbedder, isProcessing } from "./documents";
 
 describe("checkUpload", () => {
   it.each(["policy.pdf", "FAQ.MD", "notes.txt", "warranty.docx"])("accepts %s", (name) => {
@@ -44,5 +44,12 @@ describe("canReprocess", () => {
     ["processing", false],
   ] as const)("%s → %s", (status, expected) => {
     expect(canReprocess(status)).toBe(expected);
+  });
+});
+
+describe("isOfflineEmbedder", () => {
+  it("flags the fake embedder only", () => {
+    expect(isOfflineEmbedder("fake-bow-1024")).toBe(true);
+    expect(isOfflineEmbedder("voyage-4")).toBe(false);
   });
 });

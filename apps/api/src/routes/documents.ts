@@ -170,7 +170,8 @@ export function documentRoutes(deps: {
 
       // The query itself stays out of the logs: it is end-user text.
       c.get("logger").info({ strategy, limit, results: hits.length }, "knowledge search");
-      return c.json({ results: hits });
+      // The model tells the UI when search runs on the offline fake embedder (not semantic).
+      return c.json({ results: hits, model: embedder.model });
     },
   );
 

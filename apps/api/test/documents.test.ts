@@ -170,7 +170,8 @@ describe("semantic search", () => {
 
     const res = await w.a.owner.request(`${base()}/search?q=warranty+vehicles`);
     expect(res.status).toBe(200);
-    const body = await json<{ results: ChunkSearchHitDto[] }>(res);
+    const body = await json<{ results: ChunkSearchHitDto[]; model: string }>(res);
+    expect(body.model).toBe(ctx.embedder.model);
     expect(body.results.length).toBeGreaterThan(0);
     expect(body.results[0]).toMatchObject({
       chunkId: expect.any(String) as unknown,

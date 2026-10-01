@@ -34,3 +34,9 @@ export const chunkSearchHitSchema = z.object({
   score: z.number(),
 });
 export type ChunkSearchHitDto = z.infer<typeof chunkSearchHitSchema>;
+
+export const chunkSearchResponseSchema = z.object({
+  results: z.array(chunkSearchHitSchema),
+  /** Embedding model that answered; the fake one does keyword overlap, not semantics. */
+  model: z.string(),
+});

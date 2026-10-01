@@ -271,6 +271,19 @@
     "deleteYes": "Eliminar documento",
     "deleting": "Eliminando…",
     "cancel": "Cancelar",
-    "actionFailed": "No se pudo completar la acción"
+    "actionFailed": "No se pudo completar la acción",
+    "search": {
+      "title": "Prueba tu conocimiento",
+      "description": "Haz una pregunta como la haría un cliente y mira en qué fragmentos se apoyaría tu agente.",
+      "label": "Pregunta",
+      "placeholder": "¿Ofrecen financiación?",
+      "submit": "Buscar",
+      "searching": "Buscando…",
+      "noResults": "No se encontró nada relevante. Sube un documento que cubra este tema.",
+      "relevance": "Relevancia {score}",
+      "chunk": "Fragmento {index}",
+      "offline": "Modo desarrollo: la búsqueda usa un embedder de prueba basado en palabras, no en significado. Configura VOYAGE_API_KEY para resultados reales.",
+      "failed": "No se pudo completar la búsqueda"
+    }
   }
 }

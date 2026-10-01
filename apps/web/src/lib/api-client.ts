@@ -70,3 +70,13 @@ export async function apiDelete(path: string): Promise<void> {
   const error = errorBody(await res.json().catch(() => null));
   throw new ApiError(res.status, error?.code, error?.message ?? `Request failed (${res.status})`);
 }
+
+export async function apiGet<T>(path: string, schema: ZodType<T>): Promise<T> {
+  const res = await fetch(path);
+  const data: unknown = await res.json().catch(() => null);
+  if (!res.ok) {
+    const error = errorBody(data);
+    throw new ApiError(res.status, error?.code, error?.message ?? `Request failed (${res.status})`);
+  }
+  return schema.parse(data);
+}

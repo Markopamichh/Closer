@@ -19,3 +19,6 @@ export const isProcessing = (documents: Pick<DocumentDto, "status">[]) =>
 /** Mirrors the API: a document already queued or processing can't be re-queued (409). */
 export const canReprocess = (status: DocumentDto["status"]) =>
   status === "ready" || status === "failed";
+
+/** The offline embedder (no VOYAGE_API_KEY) matches shared words, not meaning. */
+export const isOfflineEmbedder = (model: string) => model.startsWith("fake-");

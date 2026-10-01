@@ -271,6 +271,19 @@
     "deleteYes": "Delete document",
     "deleting": "Deleting…",
     "cancel": "Cancel",
-    "actionFailed": "The action could not be completed"
+    "actionFailed": "The action could not be completed",
+    "search": {
+      "title": "Test your knowledge",
+      "description": "Ask a question the way a customer would and see which passages your agent would rely on.",
+      "label": "Question",
+      "placeholder": "Do you offer financing?",
+      "submit": "Search",
+      "searching": "Searching…",
+      "noResults": "Nothing relevant found. Upload a document that covers this topic.",
+      "relevance": "Relevance {score}",
+      "chunk": "Passage {index}",
+      "offline": "Development mode: search uses a keyword-based test embedder, not semantic matching. Set VOYAGE_API_KEY for real results.",
+      "failed": "The search could not be completed"
+    }
   }
 }
