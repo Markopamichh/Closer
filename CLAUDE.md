@@ -67,7 +67,7 @@ Announce every skill used (which one and why). This file wins over a skill; flag
 - Run `pnpm format:check` as its own command before committing (never piped through `tail`).
 - Keep this project outside iCloud-synced folders (Desktop/Documents): sync creates `* 2` duplicates that corrupt `node_modules` and the Next.js cache.
 
-## Current status (Week 2)
+## Current status (Week 2 done; Week 3 next)
 
 Decisions: embeddings via Voyage AI `voyage-4` (1024 dims, plain `fetch`), Supabase Storage (local disk driver in dev/tests), PDF + DOCX + TXT/MD, BullMQ worker as a separate process, dark mode with `next-themes`, i18n EN/ES with `next-intl` (browser detection + selector, cookie, no locale in URL).
 
@@ -79,9 +79,9 @@ Decisions: embeddings via Voyage AI `voyage-4` (1024 dims, plain `fetch`), Supab
 6. [x] Dark mode + EN/ES (cookie > Accept-Language > en; key parity and typed keys enforced by typecheck). API error messages are still English: translate by error code when forms get richer
 7. [x] Web: Inventory page (URL filters + pagination, create/edit dialog per kind, CSV import with dry-run preview, owner-only delete; web has Vitest for pure logic)
 8. [x] Web: Knowledge page (upload with client checks, auto-refresh only while processing, reprocess/delete, client-side "test your knowledge" search so refreshes never re-bill embeddings)
-9. [ ] Close: full checks, `security-review`, docs
+9. [x] Close: build/lint/typecheck/tests green, two `security-review` passes (no findings), inventory DTO, per-org search rate limit (30/min, fail-open), README
 
-Pending outside the code: apply migrations `0002`–`0003` to Supabase (project `jtbrswpmnjvgkmiydvrq`; `0003` aborts if pgvector < 0.8), enable login for `closer_app` there.
+Pending outside the code: apply migrations `0002`–`0003` to Supabase (project `jtbrswpmnjvgkmiydvrq`; `0003` aborts if pgvector < 0.8), enable login for `closer_app` there, create the private storage bucket. Voyage free tier without a payment method is 3 requests/min: add one before demos.
 
 ## Testing
 
@@ -95,6 +95,7 @@ Pending outside the code: apply migrations `0002`–`0003` to Supabase (project 
 - Wire an email provider; set `requireEmailVerification: true` (invitations already require a verified email).
 - Replace logged verification/invitation links with real emails.
 - Bundle the API (e.g. tsup/esbuild) instead of running it with tsx.
+- Make the search rate limit (hardcoded 30/min in `apps/api/src/index.ts`) configurable per plan (Week 5).
 - Trust `x-forwarded-for` only from the known proxy; move Better Auth rate limiting to shared storage when running more than one instance.
 
 ## Commands
@@ -113,7 +114,7 @@ docker compose up -d  # local Postgres + pgvector
 ## Roadmap
 
 - [x] **Week 1**: monorepo, auth + organizations + roles, base Drizzle schema, CI, deployable skeleton
-- [ ] **Week 2**: inventory CRUD + CSV import, document ingestion queue + embeddings
+- [x] **Week 2**: inventory CRUD + CSV import, document ingestion queue + embeddings
 - [ ] **Week 3**: agent runtime with tool use + streaming, test chat in dashboard
 - [ ] **Week 4**: embeddable widget, leads, human handoff, visit scheduling
 - [ ] **Week 5**: AI traces panel, evals in CI, per-tenant rate limiting, Stripe (test mode) plans + usage metering
