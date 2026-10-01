@@ -3,6 +3,7 @@ import { propertyAttributesSchema, vehicleAttributesSchema } from "@closer/share
 import { getFormatter, getTranslations } from "next-intl/server";
 import type { ComponentProps } from "react";
 import { Badge } from "@/components/ui/badge";
+import { ItemDialog } from "./item-dialog";
 import {
   Table,
   TableBody,
@@ -62,7 +63,15 @@ function price(item: InventoryItemDto, t: T, format: Format): string {
   }
 }
 
-export async function InventoryTable({ items }: { items: InventoryItemDto[] }) {
+export async function InventoryTable({
+  items,
+  orgId,
+  canWrite,
+}: {
+  items: InventoryItemDto[];
+  orgId: string;
+  canWrite: boolean;
+}) {
   const [t, format] = await Promise.all([getTranslations("inventory"), getFormatter()]);
   return (
     <div className="rounded-lg border">
@@ -74,6 +83,7 @@ export async function InventoryTable({ items }: { items: InventoryItemDto[] }) {
             <TableHead className="hidden md:table-cell">{t("columns.details")}</TableHead>
             <TableHead className="text-right">{t("columns.price")}</TableHead>
             <TableHead>{t("columns.status")}</TableHead>
+            {canWrite && <TableHead className="w-12" />}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -95,6 +105,11 @@ export async function InventoryTable({ items }: { items: InventoryItemDto[] }) {
               <TableCell>
                 <Badge variant={STATUS_VARIANT[item.status]}>{t(`statuses.${item.status}`)}</Badge>
               </TableCell>
+              {canWrite && (
+                <TableCell>
+                  <ItemDialog orgId={orgId} item={item} />
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>

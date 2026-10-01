@@ -137,6 +137,80 @@
     "range": "{from}–{to} of {total}",
     "previous": "Previous",
     "next": "Next",
-    "pagination": "Pagination"
+    "pagination": "Pagination",
+    "form": {
+      "newItem": "New item",
+      "edit": "Edit",
+      "editItem": "Edit {title}",
+      "createTitle": "New inventory item",
+      "editTitle": "Edit item",
+      "createDescription": "Your AI agent will use this information to answer customers.",
+      "kindLocked": "The kind can't be changed after creation.",
+      "fields": {
+        "kind": "Kind",
+        "title": "Title",
+        "externalId": "External ID",
+        "externalIdHelp": "SKU, VIN or listing code. Used to update items from CSV.",
+        "description": "Description",
+        "price": "Price",
+        "currency": "Currency",
+        "status": "Status",
+        "genericAttributes": "Attributes",
+        "genericAttributesHelp": "One per line, as key: value.",
+        "make": "Make",
+        "model": "Model",
+        "year": "Year",
+        "mileageKm": "Mileage (km)",
+        "condition": "Condition",
+        "fuel": "Fuel",
+        "transmission": "Transmission",
+        "color": "Color",
+        "operation": "Operation",
+        "propertyType": "Property type",
+        "bedrooms": "Bedrooms",
+        "bathrooms": "Bathrooms",
+        "areaM2": "Area (m²)",
+        "neighborhood": "Neighborhood",
+        "city": "City",
+        "address": "Address"
+      },
+      "options": {
+        "condition": {
+          "new": "New",
+          "used": "Used"
+        },
+        "fuel": {
+          "gasoline": "Gasoline",
+          "diesel": "Diesel",
+          "hybrid": "Hybrid",
+          "electric": "Electric",
+          "other": "Other"
+        },
+        "transmission": {
+          "manual": "Manual",
+          "automatic": "Automatic"
+        },
+        "operation": {
+          "sale": "Sale",
+          "rent": "Rent"
+        },
+        "propertyType": {
+          "apartment": "Apartment",
+          "house": "House",
+          "land": "Land",
+          "commercial": "Commercial",
+          "office": "Office"
+        }
+      },
+      "notSet": "Not set",
+      "required": "Required",
+      "invalid": "Invalid value",
+      "duplicateExternalId": "Another item already uses this external ID",
+      "failed": "Could not save the item",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…",
+      "create": "Create item"
+    }
   }
 }

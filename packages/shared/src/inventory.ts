@@ -155,3 +155,5 @@ export const inventoryPageSchema = z.object({
   offset: z.number().int(),
 });
 export type InventoryPage = z.infer<typeof inventoryPageSchema>;
+
+export const inventoryItemResponseSchema = z.object({ item: inventoryItemSchema });

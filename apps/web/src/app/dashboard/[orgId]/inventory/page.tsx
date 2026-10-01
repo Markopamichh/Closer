@@ -4,8 +4,9 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { InventoryFilters } from "@/components/inventory/inventory-filters";
 import { InventoryTable } from "@/components/inventory/inventory-table";
+import { ItemDialog } from "@/components/inventory/item-dialog";
 import { Button } from "@/components/ui/button";
-import { getInventory } from "@/lib/api-server";
+import { getInventory, getOrganizations } from "@/lib/api-server";
 
 const PAGE_SIZE = 25;
 const { shape } = listInventoryQuerySchema;
@@ -24,11 +25,15 @@ export default async function InventoryPage({
     kind: shape.kind.safeParse(one(raw.kind) || undefined).data,
     offset: shape.offset.safeParse(one(raw.offset)).data ?? 0,
   };
-  const [page, t, tNav] = await Promise.all([
+  const [page, organizations, t, tNav] = await Promise.all([
     getInventory(orgId, { ...filters, limit: PAGE_SIZE }),
+    getOrganizations(),
     getTranslations("inventory"),
     getTranslations("nav.inventory"),
   ]);
+  // UI only: the API enforces the same rule (owners and agents write).
+  const role = organizations.find((org) => org.id === orgId)?.role;
+  const canWrite = role === "owner" || role === "agent";
   const basePath = `/dashboard/${orgId}/inventory`;
   const filtered = Boolean(filters.q ?? filters.status ?? filters.kind);
 
@@ -45,9 +50,12 @@ export default async function InventoryPage({
 
   return (
     <div className="grid gap-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{tNav("label")}</h1>
-        <p className="text-sm text-muted-foreground">{tNav("description")}</p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">{tNav("label")}</h1>
+          <p className="text-sm text-muted-foreground">{tNav("description")}</p>
+        </div>
+        {canWrite && <ItemDialog orgId={orgId} />}
       </header>
 
       <InventoryFilters basePath={basePath} {...filters} />
@@ -64,7 +72,7 @@ export default async function InventoryPage({
         </div>
       ) : (
         <>
-          <InventoryTable items={page.items} />
+          <InventoryTable items={page.items} orgId={orgId} canWrite={canWrite} />
           <nav aria-label={t("pagination")} className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground tabular-nums">
               {t("range", { from, to, total: page.total })}

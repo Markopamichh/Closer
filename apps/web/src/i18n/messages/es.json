@@ -137,6 +137,80 @@
     "range": "{from}–{to} de {total}",
     "previous": "Anterior",
     "next": "Siguiente",
-    "pagination": "Paginación"
+    "pagination": "Paginación",
+    "form": {
+      "newItem": "Nuevo ítem",
+      "edit": "Editar",
+      "editItem": "Editar {title}",
+      "createTitle": "Nuevo ítem de inventario",
+      "editTitle": "Editar ítem",
+      "createDescription": "Tu agente de IA usará esta información para responder a los clientes.",
+      "kindLocked": "El tipo no se puede cambiar después de crear el ítem.",
+      "fields": {
+        "kind": "Tipo",
+        "title": "Título",
+        "externalId": "ID externo",
+        "externalIdHelp": "SKU, VIN o código de publicación. Se usa para actualizar ítems desde CSV.",
+        "description": "Descripción",
+        "price": "Precio",
+        "currency": "Moneda",
+        "status": "Estado",
+        "genericAttributes": "Atributos",
+        "genericAttributesHelp": "Uno por línea, como clave: valor.",
+        "make": "Marca",
+        "model": "Modelo",
+        "year": "Año",
+        "mileageKm": "Kilometraje (km)",
+        "condition": "Condición",
+        "fuel": "Combustible",
+        "transmission": "Transmisión",
+        "color": "Color",
+        "operation": "Operación",
+        "propertyType": "Tipo de propiedad",
+        "bedrooms": "Dormitorios",
+        "bathrooms": "Baños",
+        "areaM2": "Superficie (m²)",
+        "neighborhood": "Barrio",
+        "city": "Ciudad",
+        "address": "Dirección"
+      },
+      "options": {
+        "condition": {
+          "new": "Nuevo",
+          "used": "Usado"
+        },
+        "fuel": {
+          "gasoline": "Nafta/Gasolina",
+          "diesel": "Diésel",
+          "hybrid": "Híbrido",
+          "electric": "Eléctrico",
+          "other": "Otro"
+        },
+        "transmission": {
+          "manual": "Manual",
+          "automatic": "Automática"
+        },
+        "operation": {
+          "sale": "Venta",
+          "rent": "Alquiler"
+        },
+        "propertyType": {
+          "apartment": "Departamento",
+          "house": "Casa",
+          "land": "Terreno",
+          "commercial": "Local comercial",
+          "office": "Oficina"
+        }
+      },
+      "notSet": "Sin especificar",
+      "required": "Obligatorio",
+      "invalid": "Valor inválido",
+      "duplicateExternalId": "Otro ítem ya usa este ID externo",
+      "failed": "No se pudo guardar el ítem",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "saving": "Guardando…",
+      "create": "Crear ítem"
+    }
   }
 }

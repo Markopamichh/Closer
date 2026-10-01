@@ -1,22 +1,45 @@
 import type { ZodType } from "zod";
 
+/** A non-2xx API response; `code` is the stable machine-readable error code. */
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string | undefined,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
 /** Browser-side call to the API (same origin via the /api rewrite); response is validated. */
-export async function apiPost<T>(path: string, body: unknown, schema: ZodType<T>): Promise<T> {
+export async function apiSend<T>(
+  method: "POST" | "PATCH",
+  path: string,
+  body: unknown,
+  schema: ZodType<T>,
+): Promise<T> {
   const res = await fetch(path, {
-    method: "POST",
+    method,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   const data: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(errorMessage(data) ?? `Request failed (${res.status})`);
+  if (!res.ok) {
+    const error = errorBody(data);
+    throw new ApiError(res.status, error?.code, error?.message ?? `Request failed (${res.status})`);
+  }
   return schema.parse(data);
 }
 
-function errorMessage(data: unknown): string | undefined {
+export const apiPost = <T>(path: string, body: unknown, schema: ZodType<T>) =>
+  apiSend("POST", path, body, schema);
+
+function errorBody(data: unknown): { code?: string; message?: string } | undefined {
   if (typeof data !== "object" || data === null || !("error" in data)) return undefined;
   const { error } = data;
-  if (typeof error === "object" && error !== null && "message" in error) {
-    return typeof error.message === "string" ? error.message : undefined;
-  }
-  return undefined;
+  if (typeof error !== "object" || error === null) return undefined;
+  return {
+    code: "code" in error && typeof error.code === "string" ? error.code : undefined,
+    message: "message" in error && typeof error.message === "string" ? error.message : undefined,
+  };
 }
