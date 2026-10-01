@@ -236,5 +236,32 @@
       "failed": "The file could not be processed",
       "cancel": "Cancel"
     }
+  },
+  "knowledge": {
+    "upload": "Upload document",
+    "uploading": "Uploading…",
+    "uploadHelp": "PDF, DOCX, TXT or Markdown, up to 20 MB.",
+    "problems": {
+      "type": "Only PDF, DOCX, TXT and Markdown files are supported.",
+      "size": "The file is larger than 20 MB.",
+      "empty": "The file is empty."
+    },
+    "uploadFailed": "Could not upload the document",
+    "columns": {
+      "document": "Document",
+      "status": "Status",
+      "chunks": "Chunks",
+      "size": "Size",
+      "added": "Added"
+    },
+    "statuses": {
+      "pending": "Queued",
+      "processing": "Processing",
+      "ready": "Ready",
+      "failed": "Failed"
+    },
+    "emptyTitle": "No documents yet",
+    "emptyDescription": "Upload FAQs, policies or brochures so your agent can answer with your own information.",
+    "refreshing": "Updating while documents are processed…"
   }
 }
