@@ -20,6 +20,11 @@ export class EmbeddingError extends Error {
     super(message);
     this.name = "EmbeddingError";
   }
+
+  /** Rate limits, provider outages and network failures: worth retrying later. */
+  get transient(): boolean {
+    return this.status === undefined || this.status === 429 || this.status >= 500;
+  }
 }
 
 type Options = {

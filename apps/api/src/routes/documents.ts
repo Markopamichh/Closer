@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { EmbeddingProvider } from "@closer/ai";
+import { EmbeddingError } from "@closer/ai";
 import type { Db } from "@closer/db";
 import { withTenant } from "@closer/db";
 import type { DocumentDto } from "@closer/shared";
@@ -159,7 +160,18 @@ export function documentRoutes(deps: {
       const { orgId } = c.get("membership");
       const { q, limit } = c.req.valid("query");
 
-      const { embeddings, tokens } = await embedder.embed([q], "query");
+      let embedded;
+      try {
+        embedded = await embedder.embed([q], "query");
+      } catch (err) {
+        // A rate-limited or unavailable provider is not a bug on our side: say so, as a 503.
+        if (err instanceof EmbeddingError && err.transient) {
+          c.get("logger").warn({ err }, "embedding provider unavailable for search");
+          throw new AppError("service_unavailable", "Search is temporarily unavailable");
+        }
+        throw err;
+      }
+      const { embeddings, tokens } = embedded;
       const embedding = embeddings[0];
       if (!embedding) throw new AppError("internal_error", "Embedding failed");
 

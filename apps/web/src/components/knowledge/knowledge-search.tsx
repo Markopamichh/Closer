@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { apiGet } from "@/lib/api-client";
+import { ApiError, apiGet } from "@/lib/api-client";
 import { isOfflineEmbedder } from "@/lib/documents";
 
 /**
@@ -39,8 +39,8 @@ export function KnowledgeSearch({ orgId }: { orgId: string }) {
       );
       setResults(body.results);
       setOffline(isOfflineEmbedder(body.model));
-    } catch {
-      setError(t("failed"));
+    } catch (err) {
+      setError(err instanceof ApiError && err.status === 503 ? t("unavailable") : t("failed"));
     } finally {
       setPending(false);
     }

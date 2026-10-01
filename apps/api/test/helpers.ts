@@ -28,7 +28,7 @@ export type TestContext = {
   close: () => Promise<void>;
 };
 
-export function createTestContext(): TestContext {
+export function createTestContext(overrides: { embedder?: EmbeddingProvider } = {}): TestContext {
   const env = loadEnv();
   const logger = createLogger(env);
   const { db, close: closeDb } = createDb(env.DATABASE_APP_URL, { max: 5 });
@@ -36,7 +36,7 @@ export function createTestContext(): TestContext {
   const storage = createStorage(env);
   const documents = createDocumentQueue(env.REDIS_URL, env.QUEUE_PREFIX);
   const documentQueue = documents.queue;
-  const embedder = createFakeEmbedder();
+  const embedder = overrides.embedder ?? createFakeEmbedder();
   const app = createApp({ db, auth, logger, storage, documentQueue, embedder });
   const ownerUrl = process.env.DATABASE_URL;
   if (!ownerUrl) throw new Error("DATABASE_URL missing");

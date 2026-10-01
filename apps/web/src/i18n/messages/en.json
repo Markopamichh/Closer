@@ -283,7 +283,8 @@
       "relevance": "Relevance {score}",
       "chunk": "Passage {index}",
       "offline": "Development mode: search uses a keyword-based test embedder, not semantic matching. Set VOYAGE_API_KEY for real results.",
-      "failed": "The search could not be completed"
+      "failed": "The search could not be completed",
+      "unavailable": "Search is busy right now. Try again in a minute."
     }
   }
 }

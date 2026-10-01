@@ -6,9 +6,10 @@ export type ErrorCode =
   | "not_found"
   | "conflict"
   | "payload_too_large"
-  | "internal_error";
+  | "internal_error"
+  | "service_unavailable";
 
-const STATUS: Record<ErrorCode, 400 | 401 | 403 | 404 | 409 | 413 | 422 | 500> = {
+const STATUS: Record<ErrorCode, 400 | 401 | 403 | 404 | 409 | 413 | 422 | 500 | 503> = {
   bad_request: 400,
   validation_error: 422,
   unauthorized: 401,
@@ -17,6 +18,7 @@ const STATUS: Record<ErrorCode, 400 | 401 | 403 | 404 | 409 | 413 | 422 | 500> =
   conflict: 409,
   payload_too_large: 413,
   internal_error: 500,
+  service_unavailable: 503,
 };
 
 /** Expected, client-facing errors. Anything else is treated as a 500 by the error handler. */

@@ -48,9 +48,7 @@ const formatFromMime = (mimeType: string | null): DocumentFormat | null =>
 function isPermanent(err: unknown): boolean {
   if (err instanceof ExtractionError || err instanceof NoTextError) return true;
   if (err instanceof StorageNotFoundError) return true;
-  if (err instanceof EmbeddingError) {
-    return err.status !== undefined && err.status < 500 && err.status !== 429;
-  }
+  if (err instanceof EmbeddingError) return !err.transient;
   return false;
 }
 
