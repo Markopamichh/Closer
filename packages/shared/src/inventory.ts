@@ -6,6 +6,18 @@ export type InventoryKind = (typeof INVENTORY_KINDS)[number];
 export const INVENTORY_STATUSES = ["available", "reserved", "sold", "archived"] as const;
 export type InventoryStatus = (typeof INVENTORY_STATUSES)[number];
 
+/**
+ * "18500.5" → 1850050, or null when the text is not a price. Parsed from the text, never
+ * through a float multiply: `19.99 * 100` is 1998.9999999999998. Up to 10 integer digits
+ * keeps every accepted value under the schema max (1e12 cents).
+ */
+export function priceToCents(raw: string): number | null {
+  const match = /^(\d{1,10})(?:\.(\d{1,2}))?$/.exec(raw.trim());
+  if (!match) return null;
+  const [, units = "0", decimals = ""] = match;
+  return Number(units) * 100 + Number(decimals.padEnd(2, "0"));
+}
+
 const optionalText = (max: number) => z.string().trim().min(1).max(max).optional();
 const nonNegativeInt = z.number().int().nonnegative();
 

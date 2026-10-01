@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { CsvFormatError, parseInventoryCsv, priceToCents } from "../src/lib/inventory-csv";
+import { priceToCents } from "@closer/shared";
+import { CsvFormatError, parseInventoryCsv } from "../src/lib/inventory-csv";
 
 const header = "external_id,kind,title,price,make,model,year,mileage_km";
 

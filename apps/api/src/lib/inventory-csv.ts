@@ -1,5 +1,5 @@
 import type { CreateInventoryItemInput } from "@closer/shared";
-import { CSV_IMPORT_LIMITS, createInventoryItemSchema } from "@closer/shared";
+import { CSV_IMPORT_LIMITS, createInventoryItemSchema, priceToCents } from "@closer/shared";
 import { parse } from "csv-parse/sync";
 
 /** Columns that map to item fields; every other column is an attribute of the item. */
@@ -27,17 +27,6 @@ function attributeValue(raw: string): string | number | boolean {
   if (/^-?\d+(\.\d+)?$/.test(raw)) return Number(raw);
   if (raw === "true" || raw === "false") return raw === "true";
   return raw;
-}
-
-/**
- * "18500.5" → 1850050. Parsed from the text, never through a float multiply, so
- * values like 0.29 don't turn into 28 cents.
- */
-export function priceToCents(raw: string): number | null {
-  const match = /^(\d{1,10})(?:\.(\d{1,2}))?$/.exec(raw);
-  if (!match) return null;
-  const [, units = "0", decimals = ""] = match;
-  return Number(units) * 100 + Number(decimals.padEnd(2, "0"));
 }
 
 /**

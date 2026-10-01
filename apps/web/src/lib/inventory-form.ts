@@ -7,6 +7,7 @@ import type {
 import {
   ATTRIBUTE_SCHEMAS,
   createInventoryItemSchema,
+  priceToCents,
   propertyAttributesSchema,
   updateInventoryItemSchema,
   vehicleAttributesSchema,
@@ -54,20 +55,10 @@ export type FieldErrors = ReadonlySet<string>;
 
 export type BuildResult<T> = { ok: true; body: T } | { ok: false; errors: FieldErrors };
 
-// Up to 10 integer digits keeps every accepted price under the schema max (1e12 cents).
-const PRICE = /^(\d{1,10})(?:\.(\d{1,2}))?$/;
-
-/**
- * "18500.5" → 1850050. String arithmetic on purpose: `19.99 * 100` is
- * 1998.9999999999998 in floating point, and this is money.
- */
+/** Empty means "no price" (null); text that is not a price is undefined. */
 export function parsePriceToCents(input: string): number | null | undefined {
-  const value = input.trim();
-  if (value === "") return null;
-  const match = PRICE.exec(value);
-  if (!match) return undefined;
-  const [, units = "0", fraction = ""] = match;
-  return Number(units) * 100 + Number(fraction.padEnd(2, "0"));
+  if (input.trim() === "") return null;
+  return priceToCents(input) ?? undefined;
 }
 
 export function formatCents(cents: number | null): string {
