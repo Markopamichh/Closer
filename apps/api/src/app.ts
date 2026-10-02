@@ -1,4 +1,4 @@
-import type { EmbeddingProvider } from "@closer/ai";
+import type { EmbeddingProvider, LlmClient } from "@closer/ai";
 import type { Db } from "@closer/db";
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
@@ -10,6 +10,7 @@ import type { FileStorage } from "./lib/storage";
 import { errorHandler } from "./middleware/error-handler";
 import { requestContext } from "./middleware/request-context";
 import type { DocumentQueue } from "./queue/documents";
+import { agentChatRoutes } from "./routes/agent-chat";
 import { agentRoutes } from "./routes/agents";
 import { documentRoutes } from "./routes/documents";
 import { healthRoutes } from "./routes/health";
@@ -26,6 +27,10 @@ export type AppDeps = {
   embedder: EmbeddingProvider;
   /** Per-org limit on paid query embeddings. */
   searchLimiter: RateLimiter;
+  /** Null when no model provider is configured. */
+  llm: LlmClient | null;
+  /** Per-org limit on agent messages (each one costs model tokens). */
+  chatLimiter: RateLimiter;
 };
 
 /** Builds the HTTP app from its dependencies, so tests can inject their own. */
@@ -46,6 +51,7 @@ export function createApp(deps: AppDeps) {
   app.on(["GET", "POST"], "/api/auth/*", (c) => deps.auth.handler(c.req.raw));
   app.route("/api/me", meRoutes(deps));
   app.route("/api/organizations", organizationRoutes(deps));
+  app.route("/api/organizations/:orgId/agents/:agentId/test-chat", agentChatRoutes(deps));
   app.route("/api/organizations/:orgId/agents", agentRoutes(deps));
   app.route("/api/organizations/:orgId/inventory", inventoryRoutes(deps));
   app.route("/api/organizations/:orgId/documents", documentRoutes(deps));

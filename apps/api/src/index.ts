@@ -1,3 +1,4 @@
+import { createOpenAiClient } from "@closer/ai";
 import { createDb } from "@closer/db";
 import { serve } from "@hono/node-server";
 import { Redis } from "ioredis";
@@ -19,6 +20,7 @@ const documents = createDocumentQueue(env.REDIS_URL, env.QUEUE_PREFIX);
 // limiter can fail open instead of hanging the request.
 const redis = new Redis(env.REDIS_URL);
 const SEARCHES_PER_MINUTE = 30;
+const AGENT_MESSAGES_PER_MINUTE = 20;
 const app = createApp({
   db,
   auth,
@@ -29,6 +31,12 @@ const app = createApp({
   searchLimiter: createRedisRateLimiter(redis, {
     prefix: env.QUEUE_PREFIX,
     limit: SEARCHES_PER_MINUTE,
+    windowSeconds: 60,
+  }),
+  llm: env.OPENAI_API_KEY ? createOpenAiClient({ apiKey: env.OPENAI_API_KEY }) : null,
+  chatLimiter: createRedisRateLimiter(redis, {
+    prefix: `${env.QUEUE_PREFIX}:chat`,
+    limit: AGENT_MESSAGES_PER_MINUTE,
     windowSeconds: 60,
   }),
 });

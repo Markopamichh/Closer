@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /**
  * Our own, provider-neutral view of a conversation. The agent loop and the database speak
  * this; provider adapters (OpenAI today) translate it. History is append-only.
@@ -65,3 +67,16 @@ export class LlmError extends Error {
     return this.status === undefined || this.status === 429 || this.status >= 500;
   }
 }
+
+/** For reading stored history back: database JSON is validated before it reaches a model. */
+export const chatItemSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("user"), text: z.string() }),
+  z.object({ type: z.literal("assistant"), text: z.string() }),
+  z.object({
+    type: z.literal("tool_call"),
+    callId: z.string(),
+    name: z.string(),
+    arguments: z.string(),
+  }),
+  z.object({ type: z.literal("tool_result"), callId: z.string(), output: z.string() }),
+]);

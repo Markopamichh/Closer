@@ -35,3 +35,28 @@ export const updateAgentSchema = z
   .strict()
   .refine((v) => Object.keys(v).length > 0, { message: "At least one field is required" });
 export type UpdateAgentInput = z.infer<typeof updateAgentSchema>;
+
+export const agentChatRequestSchema = z.object({
+  /** Omit to start a new conversation. */
+  conversationId: z.uuid().optional(),
+  message: z.string().trim().min(1).max(2000),
+});
+export type AgentChatRequest = z.infer<typeof agentChatRequestSchema>;
+
+/** Server-sent events of a test chat reply, in order: start, (delta | tool)*, done | error. */
+export const agentChatEventSchemas = {
+  start: z.object({ conversationId: z.uuid() }),
+  delta: z.object({ text: z.string() }),
+  tool: z.object({ name: z.string(), phase: z.enum(["start", "end"]), ok: z.boolean().optional() }),
+  done: z.object({
+    messageId: z.uuid(),
+    usage: z.object({
+      inputTokens: z.number().int(),
+      cachedInputTokens: z.number().int(),
+      outputTokens: z.number().int(),
+      costUsd: z.number(),
+    }),
+  }),
+  error: z.object({ code: z.enum(["unavailable", "failed"]) }),
+} as const;
+export type AgentChatEventName = keyof typeof agentChatEventSchemas;

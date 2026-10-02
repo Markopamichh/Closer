@@ -19,6 +19,8 @@ const envSchema = z
 
     /** Without a key, document ingestion uses the offline fake embedder (dev only). */
     VOYAGE_API_KEY: z.string().min(1).optional(),
+    /** Without it the agent chat answers 503: better visible than a fake agent. */
+    OPENAI_API_KEY: z.string().min(1).optional(),
     EMBEDDING_MODEL: z.string().min(1).default("voyage-4"),
 
     STORAGE_DRIVER: z.enum(["local", "supabase"]).default("local"),

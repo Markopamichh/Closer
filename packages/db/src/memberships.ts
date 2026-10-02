@@ -26,3 +26,12 @@ export function listOrganizationsForUser(db: Db, userId: string) {
     .where(eq(memberships.userId, userId))
     .orderBy(asc(organizations.name));
 }
+
+/** Display name of an org the caller was already verified to belong to. */
+export async function getOrganizationName(db: Db, orgId: string) {
+  const [row] = await db
+    .select({ name: organizations.name })
+    .from(organizations)
+    .where(eq(organizations.id, orgId));
+  return row?.name ?? null;
+}

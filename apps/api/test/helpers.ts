@@ -1,4 +1,4 @@
-import type { EmbeddingProvider } from "@closer/ai";
+import type { EmbeddingProvider, LlmClient } from "@closer/ai";
 import { createFakeEmbedder } from "@closer/ai";
 import type { Db } from "@closer/db";
 import { createDb } from "@closer/db";
@@ -32,7 +32,12 @@ export type TestContext = {
 };
 
 export function createTestContext(
-  overrides: { embedder?: EmbeddingProvider; searchLimiter?: RateLimiter } = {},
+  overrides: {
+    embedder?: EmbeddingProvider;
+    searchLimiter?: RateLimiter;
+    llm?: LlmClient | null;
+    chatLimiter?: RateLimiter;
+  } = {},
 ): TestContext {
   const env = loadEnv();
   const logger = createLogger(env);
@@ -51,7 +56,24 @@ export function createTestContext(
       limit: 1000,
       windowSeconds: 60,
     });
-  const app = createApp({ db, auth, logger, storage, documentQueue, embedder, searchLimiter });
+  const chatLimiter =
+    overrides.chatLimiter ??
+    createRedisRateLimiter(redis, {
+      prefix: `${env.QUEUE_PREFIX}:${crypto.randomUUID()}`,
+      limit: 1000,
+      windowSeconds: 60,
+    });
+  const app = createApp({
+    db,
+    auth,
+    logger,
+    storage,
+    documentQueue,
+    embedder,
+    searchLimiter,
+    llm: overrides.llm === undefined ? null : overrides.llm,
+    chatLimiter,
+  });
   const ownerUrl = process.env.DATABASE_URL;
   if (!ownerUrl) throw new Error("DATABASE_URL missing");
   const sql = postgres(ownerUrl, { max: 2, onnotice: () => undefined });
@@ -78,7 +100,10 @@ export const uniqueEmail = (label: string) =>
 export type Client = {
   userId: string;
   email: string;
-  request: (path: string, init?: { method?: string; body?: unknown }) => Promise<Response>;
+  request: (
+    path: string,
+    init?: { method?: string; body?: unknown; signal?: AbortSignal },
+  ) => Promise<Response>;
   /** Multipart upload; the boundary header is set by the runtime from the FormData. */
   upload: (path: string, form: FormData) => Promise<Response>;
 };
@@ -106,6 +131,7 @@ export async function signUp(app: TestContext["app"], label: string): Promise<Cl
         method: init.method ?? "GET",
         headers: { cookie, origin: WEB_ORIGIN, "content-type": "application/json" },
         ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }),
+        ...(init.signal ? { signal: init.signal } : {}),
       }),
     upload: async (path, form) =>
       app.request(path, { method: "POST", headers: { cookie, origin: WEB_ORIGIN }, body: form }),
