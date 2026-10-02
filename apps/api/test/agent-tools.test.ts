@@ -100,6 +100,16 @@ describe("business rules", () => {
     expect(over.items.map((i) => i.id)).toEqual([pricey.id]);
   });
 
+  it("tells the model how to recover when a literal query matches nothing", async () => {
+    const empty = await call("search_inventory", { query: "camioneta auto", maxPrice: 20000 });
+    expect(empty).toMatchObject({
+      total: 0,
+      hint: expect.stringContaining("without `query`") as unknown,
+    });
+    const browse = await call("search_inventory", { kind: "vehicle" });
+    expect(browse).not.toHaveProperty("hint");
+  });
+
   it("clips long descriptions in search results", async () => {
     await createItem({ title: "Long CLIPTEST", description: "x".repeat(1000) });
     const found = (await call("search_inventory", { query: "CLIPTEST" })) as Found;

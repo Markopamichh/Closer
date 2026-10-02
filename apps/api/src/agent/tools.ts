@@ -61,7 +61,11 @@ export function createAgentTools(deps: {
           .min(1)
           .max(100)
           .optional()
-          .describe("Words from the title or reference code"),
+          .describe(
+            "Literal text matched against item titles and reference codes, e.g. a brand, model " +
+              "or code ('Toyota', 'VIN-001'). Omit it to browse by kind and price: generic words " +
+              "like 'truck' or 'cheap' rarely appear in titles.",
+          ),
         kind: z.enum(INVENTORY_KINDS).optional(),
         minPrice: z
           .number()
@@ -88,6 +92,12 @@ export function createAgentTools(deps: {
         return {
           total: page.total,
           items: page.items.map((item) => toAgentItem(item, SUMMARY_CHARS)),
+          // An actionable empty result lets the model recover in its next round.
+          ...(page.total === 0 && input.query
+            ? {
+                hint: "No title or reference contains that text. Search again without `query` to browse by kind and price.",
+              }
+            : {}),
         };
       },
     }),
