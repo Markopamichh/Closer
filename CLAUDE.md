@@ -71,7 +71,7 @@ Announce every skill used (which one and why). This file wins over a skill; flag
 
 **Resume here (end of 2026-10-02):** steps 3.1–3.5 are done and pushed (agent loop, tools, cached prompt, SSE test chat API, Agent page with config + streamed test chat). Demo Motors (local dev DB) has an agent named "Dulce". Next, in order:
 
-1. Replace `next-themes` (0.4.6, unmaintained) with a ~50-line provider whose no-flash script is rendered in the server layout's `<head>`: React 19.3 warns "Encountered a script tag while rendering React component" for scripts inside client components (dev-only, theme still works).
+1. [x] Replaced `next-themes` with our own provider (`useSyncExternalStore` over localStorage, same `theme` key) and a no-flash script in the server layout's `<head>`; a test runs that exact script against `parseTheme`/`isDark`.
 2. Marko tests the Agent page in a real browser (streaming text, tool indicators, stop, new conversation, viewer read-only). Not browser-verified yet: the read loop was replayed with the real parser against the live server instead.
 3. Step 3.6 close: full checks + build, `security-review` (prompt injection, tenant isolation, cost abuse), README "AI agent" section, CLAUDE.md.
    Known gaps to carry: tokens of completed rounds are not traced when the client aborts mid-reply (Week 5 traces); `search_inventory` query is a literal title match (consider semantic inventory search if Week 5 evals show misses).
@@ -79,7 +79,7 @@ Announce every skill used (which one and why). This file wins over a skill; flag
 
 Week 3 plan (approved 2026-10-01): 3.1 LLM client interface + OpenAI adapter + manual tool loop (max 5 tool rounds, abort on client disconnect, append-only history), 3.2 read-only tools (`search_inventory`, `get_inventory_item`, `search_knowledge`; org from the conversation, Zod-validated input, documents treated as untrusted), 3.3 stable cached prompt prefix, 3.4 SSE test-chat API with messages/tool_calls/ai_traces persistence, `ai_message` usage and per-org rate limit, 3.5 Agent page (config + streaming test chat), 3.6 close. Week 5: evals decide whether `gpt-5-nano` is good enough (candidates: `gpt-6-luna`, `gpt-5.6-luna`).
 
-Decisions: embeddings via Voyage AI `voyage-4` (1024 dims, plain `fetch`), Supabase Storage (local disk driver in dev/tests), PDF + DOCX + TXT/MD, BullMQ worker as a separate process, dark mode with `next-themes`, i18n EN/ES with `next-intl` (browser detection + selector, cookie, no locale in URL).
+Decisions: embeddings via Voyage AI `voyage-4` (1024 dims, plain `fetch`), Supabase Storage (local disk driver in dev/tests), PDF + DOCX + TXT/MD, BullMQ worker as a separate process, dark mode with our own theme provider (was `next-themes`, dropped for React 19.3's script warning), i18n EN/ES with `next-intl` (browser detection + selector, cookie, no locale in URL).
 
 1. [x] Infra: Redis, env, storage adapters, embedding providers
 2. [x] Inventory CRUD (per-vertical attributes, kind immutable)
@@ -91,7 +91,7 @@ Decisions: embeddings via Voyage AI `voyage-4` (1024 dims, plain `fetch`), Supab
 8. [x] Web: Knowledge page (upload with client checks, auto-refresh only while processing, reprocess/delete, client-side "test your knowledge" search so refreshes never re-bill embeddings)
 9. [x] Close: build/lint/typecheck/tests green, two `security-review` passes (no findings), inventory DTO, per-org search rate limit (30/min, fail-open), README
 
-Supabase (project `jtbrswpmnjvgkmiydvrq`) is set up: migrations `0000`–`0003` applied (`0004`–`0005` dry-run OK, not applied yet) (pgvector 0.8.2), `closer_app` login enabled and verified under RLS, private `documents` bucket verified with the real adapter. Credentials live in the git-ignored `.env.supabase` (`set -a; source .env.supabase; set +a` before `pnpm db:migrate`); local dev and tests keep using Docker via `.env`. Still pending: add a payment method to Voyage before demos (free tier is 3 requests/min).
+Supabase (project `jtbrswpmnjvgkmiydvrq`) is set up: migrations `0000`–`0005` applied (pgvector 0.8.2), `closer_app` login enabled and verified under RLS, private `documents` bucket verified with the real adapter. Credentials live in the git-ignored `.env.supabase` (`set -a; source .env.supabase; set +a` before `pnpm db:migrate`); local dev and tests keep using Docker via `.env`. Still pending: add a payment method to Voyage before demos (free tier is 3 requests/min).
 
 ## Testing
 
