@@ -1,6 +1,7 @@
 import type { Db } from "@closer/db";
 import { isForeignKeyViolation, withTenant } from "@closer/db";
-import { createAgentSchema, updateAgentSchema } from "@closer/shared";
+import type { AgentDto } from "@closer/shared";
+import { AGENT_MODELS, AGENT_TONES, createAgentSchema, updateAgentSchema } from "@closer/shared";
 import { Hono } from "hono";
 import type { Auth } from "../auth";
 import { AppError, notFound } from "../lib/errors";
@@ -15,6 +16,31 @@ import { validate } from "../middleware/validate";
  * Any member can read; only owners can change how the agent talks to customers.
  * All data access goes through `withTenant` (repository filter + RLS).
  */
+type AgentRow = Omit<AgentDto, "tone" | "model" | "createdAt" | "updatedAt"> & {
+  tone: string;
+  model: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+/** Public shape. Tone and model are validated on write; a stray value is a broken invariant. */
+function toDto(agent: AgentRow): AgentDto {
+  const tone = AGENT_TONES.find((t) => t === agent.tone);
+  const model = AGENT_MODELS.find((m) => m === agent.model);
+  if (!tone || !model) throw new Error(`Agent ${agent.id} has an unknown tone or model`);
+  return {
+    id: agent.id,
+    name: agent.name,
+    systemPrompt: agent.systemPrompt,
+    tone,
+    rules: agent.rules,
+    model,
+    isActive: agent.isActive,
+    createdAt: agent.createdAt.toISOString(),
+    updatedAt: agent.updatedAt.toISOString(),
+  };
+}
+
 export function agentRoutes({ auth, db }: { auth: Auth; db: Db }) {
   const r = new Hono<{ Variables: AuthVariables }>();
 
@@ -23,13 +49,13 @@ export function agentRoutes({ auth, db }: { auth: Auth; db: Db }) {
   r.get("/", requireRole(db, ...ANY_ROLE), async (c) => {
     const { orgId } = c.get("membership");
     const agents = await withTenant(db, orgId, (repo) => repo.agents.list());
-    return c.json({ agents });
+    return c.json({ agents: agents.map(toDto) });
   });
 
   r.post("/", requireRole(db, "owner"), validate("json", createAgentSchema), async (c) => {
     const { orgId } = c.get("membership");
     const agent = await withTenant(db, orgId, (repo) => repo.agents.create(c.req.valid("json")));
-    return c.json({ agent }, 201);
+    return c.json({ agent: toDto(agent) }, 201);
   });
 
   r.get("/:agentId", requireRole(db, ...ANY_ROLE), async (c) => {
@@ -37,7 +63,7 @@ export function agentRoutes({ auth, db }: { auth: Auth; db: Db }) {
     const agentId = resourceId(c.req.param("agentId"), "Agent");
     const agent = await withTenant(db, orgId, (repo) => repo.agents.get(agentId));
     if (!agent) throw notFound("Agent");
-    return c.json({ agent });
+    return c.json({ agent: toDto(agent) });
   });
 
   r.patch("/:agentId", requireRole(db, "owner"), validate("json", updateAgentSchema), async (c) => {
@@ -46,7 +72,7 @@ export function agentRoutes({ auth, db }: { auth: Auth; db: Db }) {
     const patch = c.req.valid("json");
     const agent = await withTenant(db, orgId, (repo) => repo.agents.update(agentId, patch));
     if (!agent) throw notFound("Agent");
-    return c.json({ agent });
+    return c.json({ agent: toDto(agent) });
   });
 
   r.delete("/:agentId", requireRole(db, "owner"), async (c) => {

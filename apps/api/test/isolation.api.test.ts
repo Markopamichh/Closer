@@ -278,11 +278,14 @@ describe("listings only contain the caller's tenants", () => {
   });
 
   it("A's agent list never includes B's agents", async () => {
-    const { agents } = await json<{ agents: { id: string; orgId: string }[] }>(
+    const { agents } = await json<{ agents: { id: string }[] }>(
       await w.a.owner.request(`/api/organizations/${w.orgA}/agents`),
     );
     expect(agents.length).toBeGreaterThan(0);
-    expect(agents.every((a) => a.orgId === w.orgA)).toBe(true);
+    // Ground truth from the database: the response itself no longer carries org_id.
+    const owners =
+      await ctx.sql`select distinct org_id from agents where id in ${ctx.sql(agents.map((a) => a.id))}`;
+    expect(owners.map((o) => String(o.org_id))).toEqual([w.orgA]);
     expect(agents.map((a) => a.id)).not.toContain(w.agentB.id);
   });
 });

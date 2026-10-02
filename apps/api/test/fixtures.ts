@@ -13,7 +13,7 @@ export function fileForm(
   return form;
 }
 
-type Agent = { id: string; orgId: string; name: string };
+type Agent = { id: string; name: string };
 type Item = { id: string; externalId: string | null };
 type Doc = { id: string; title: string; status: string };
 

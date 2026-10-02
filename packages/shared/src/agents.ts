@@ -36,6 +36,22 @@ export const updateAgentSchema = z
   .refine((v) => Object.keys(v).length > 0, { message: "At least one field is required" });
 export type UpdateAgentInput = z.infer<typeof updateAgentSchema>;
 
+/** Agent as the API returns it (org_id and other internal columns stay out). */
+export const agentSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  systemPrompt: z.string(),
+  tone: z.enum(AGENT_TONES),
+  rules: z.array(z.string()),
+  model: z.enum(AGENT_MODELS),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type AgentDto = z.infer<typeof agentSchema>;
+export const agentListSchema = z.object({ agents: z.array(agentSchema) });
+export const agentResponseSchema = z.object({ agent: agentSchema });
+
 export const agentChatRequestSchema = z.object({
   /** Omit to start a new conversation. */
   conversationId: z.uuid().optional(),
