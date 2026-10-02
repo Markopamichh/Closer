@@ -287,5 +287,57 @@
       "unavailable": "La búsqueda está ocupada en este momento. Prueba de nuevo en un minuto.",
       "rateLimited": "Llegaste al límite de búsquedas de este minuto. Prueba de nuevo en un momento."
     }
+  },
+  "agentPage": {
+    "createTitle": "Crea tu agente de IA",
+    "createDescription": "Dale un nombre; después puedes ajustar su tono y sus reglas.",
+    "createSubmit": "Crear agente",
+    "creating": "Creando…",
+    "noAgent": "Esta organización todavía no tiene agente. Pídele a un propietario que lo cree.",
+    "configTitle": "Configuración",
+    "configDescription": "Cómo se presenta tu agente y cómo se comporta con los clientes.",
+    "readOnly": "Solo los propietarios pueden cambiar la configuración.",
+    "fields": {
+      "name": "Nombre",
+      "tone": "Tono",
+      "model": "Modelo",
+      "rules": "Reglas",
+      "rulesHelp": "Una por línea, por ejemplo \"Ofrecer siempre una prueba de manejo\".",
+      "notes": "Notas del negocio",
+      "notesHelp": "Contexto extra: ubicación, horarios, qué los diferencia."
+    },
+    "tones": {
+      "friendly": "Amigable",
+      "professional": "Profesional",
+      "concise": "Conciso",
+      "enthusiastic": "Entusiasta"
+    },
+    "modelPrice": "${input} entrada · ${output} salida por 1M de tokens",
+    "save": "Guardar cambios",
+    "saving": "Guardando…",
+    "saved": "Guardado",
+    "saveFailed": "No se pudo guardar la configuración",
+    "chatTitle": "Chat de prueba",
+    "chatDescription": "Habla con tu agente como lo haría un cliente. Las respuestas usan tu inventario y tus documentos reales.",
+    "chatReadOnly": "Los lectores no pueden usar el chat de prueba.",
+    "placeholder": "Escribe un mensaje…",
+    "send": "Enviar",
+    "stop": "Detener",
+    "newConversation": "Nueva conversación",
+    "empty": "Pregunta algo que preguntaría un cliente, por ejemplo \"¿Tienen autos por menos de 20.000?\"",
+    "tools": {
+      "search_inventory": "Buscando en el inventario",
+      "get_inventory_item": "Revisando un ítem",
+      "search_knowledge": "Buscando en los documentos"
+    },
+    "usage": "{tokens} tokens · {cost}",
+    "you": "Tú",
+    "errors": {
+      "rateLimited": "Demasiados mensajes en este minuto. Prueba de nuevo en un momento.",
+      "notConfigured": "El modelo del agente no está configurado en el servidor.",
+      "unavailable": "El modelo está ocupado en este momento. Prueba de nuevo enseguida.",
+      "failed": "El agente no pudo responder. Prueba de nuevo.",
+      "stopped": "Detenido."
+    }
   }
 }

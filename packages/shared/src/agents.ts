@@ -11,6 +11,20 @@ export const AGENT_MODELS = ["gpt-5-nano", "gpt-6-luna", "gpt-5.6-luna", "gpt-5-
 export type AgentModel = (typeof AGENT_MODELS)[number];
 export const DEFAULT_AGENT_MODEL: AgentModel = "gpt-5-nano";
 
+/**
+ * USD per 1M tokens, standard tier, from the official OpenAI pricing page (checked
+ * 2026-10-01). One table for the API's cost accounting and the dashboard's model picker.
+ */
+export const AGENT_MODEL_PRICES: Record<
+  AgentModel,
+  { input: number; cachedInput: number; output: number }
+> = {
+  "gpt-5-nano": { input: 0.05, cachedInput: 0.005, output: 0.4 },
+  "gpt-6-luna": { input: 0.1, cachedInput: 0.01, output: 0.5 },
+  "gpt-5.6-luna": { input: 0.2, cachedInput: 0.02, output: 1.2 },
+  "gpt-5-mini": { input: 0.25, cachedInput: 0.025, output: 2.0 },
+};
+
 export const createAgentSchema = z.object({
   name: z.string().trim().min(1).max(80),
   systemPrompt: z.string().max(20_000).default(""),

@@ -318,6 +318,9 @@ importers:
 
   packages/ai:
     dependencies:
+      '@closer/shared':
+        specifier: workspace:*
+        version: link:../shared
       openai:
         specifier: ^7.25.0
         version: 7.25.0(undici@7.30.0)(zod@4.6.5)

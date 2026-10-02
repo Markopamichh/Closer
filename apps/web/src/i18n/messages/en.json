@@ -287,5 +287,57 @@
       "unavailable": "Search is busy right now. Try again in a minute.",
       "rateLimited": "You've reached the search limit for this minute. Try again shortly."
     }
+  },
+  "agentPage": {
+    "createTitle": "Create your AI agent",
+    "createDescription": "Give it a name; you can tune its tone and rules afterwards.",
+    "createSubmit": "Create agent",
+    "creating": "Creating…",
+    "noAgent": "This organization has no agent yet. Ask an owner to create one.",
+    "configTitle": "Configuration",
+    "configDescription": "How your agent introduces itself and behaves with customers.",
+    "readOnly": "Only owners can change the configuration.",
+    "fields": {
+      "name": "Name",
+      "tone": "Tone",
+      "model": "Model",
+      "rules": "Rules",
+      "rulesHelp": "One per line, e.g. \"Always offer a test drive\".",
+      "notes": "Business notes",
+      "notesHelp": "Extra context: location, opening hours, what makes you different."
+    },
+    "tones": {
+      "friendly": "Friendly",
+      "professional": "Professional",
+      "concise": "Concise",
+      "enthusiastic": "Enthusiastic"
+    },
+    "modelPrice": "${input} in · ${output} out per 1M tokens",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "saveFailed": "Could not save the configuration",
+    "chatTitle": "Test chat",
+    "chatDescription": "Talk to your agent as a customer would. Replies use your real inventory and documents.",
+    "chatReadOnly": "Viewers can't use the test chat.",
+    "placeholder": "Write a message…",
+    "send": "Send",
+    "stop": "Stop",
+    "newConversation": "New conversation",
+    "empty": "Ask something a customer would ask, e.g. \"Do you have cars under 20,000?\"",
+    "tools": {
+      "search_inventory": "Searching the inventory",
+      "get_inventory_item": "Checking an item",
+      "search_knowledge": "Searching the documents"
+    },
+    "usage": "{tokens} tokens · {cost}",
+    "you": "You",
+    "errors": {
+      "rateLimited": "Too many messages this minute. Try again shortly.",
+      "notConfigured": "The agent model is not configured on the server.",
+      "unavailable": "The model is busy right now. Try again in a moment.",
+      "failed": "The agent could not answer. Try again.",
+      "stopped": "Stopped."
+    }
   }
 }

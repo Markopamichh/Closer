@@ -1,6 +1,7 @@
 import "server-only";
 import type { ListInventoryQuery, OrganizationSummary } from "@closer/shared";
 import {
+  agentListSchema,
   documentListSchema,
   inventoryPageSchema,
   meSchema,
@@ -53,3 +54,6 @@ export function getInventory(orgId: string, query: InventoryQuery) {
 export const getDocuments = async (orgId: string) =>
   (await apiGet(`/api/organizations/${encodeURIComponent(orgId)}/documents`, documentListSchema))
     .documents;
+
+export const getAgents = async (orgId: string) =>
+  (await apiGet(`/api/organizations/${encodeURIComponent(orgId)}/agents`, agentListSchema)).agents;

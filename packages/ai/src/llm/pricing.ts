@@ -1,15 +1,8 @@
+import { AGENT_MODEL_PRICES } from "@closer/shared";
 import type { LlmUsage } from "./types";
 
-/**
- * USD per 1M tokens, standard tier, from the official OpenAI pricing page (checked
- * 2026-10-01). Update together with AGENT_MODELS; an unpriced model costs `null`.
- */
-const PRICES: Record<string, { input: number; cachedInput: number; output: number }> = {
-  "gpt-5-nano": { input: 0.05, cachedInput: 0.005, output: 0.4 },
-  "gpt-6-luna": { input: 0.1, cachedInput: 0.01, output: 0.5 },
-  "gpt-5.6-luna": { input: 0.2, cachedInput: 0.02, output: 1.2 },
-  "gpt-5-mini": { input: 0.25, cachedInput: 0.025, output: 2.0 },
-};
+const PRICES: Record<string, { input: number; cachedInput: number; output: number } | undefined> =
+  AGENT_MODEL_PRICES;
 
 /** The API reports dated snapshots ("gpt-5-nano-2025-08-07"); price them as their base model. */
 const baseModel = (model: string) => model.replace(/-\d{4}-\d{2}-\d{2}$/, "");
