@@ -2,3 +2,7 @@ export * from "./embeddings/fake";
 export * from "./embeddings/types";
 export * from "./embeddings/voyage";
 export * from "./ingestion/chunk";
+export * from "./agent/run";
+export * from "./llm/openai";
+export * from "./llm/types";
+export * from "./llm/fake";
