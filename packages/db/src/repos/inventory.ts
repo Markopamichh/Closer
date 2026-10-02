@@ -1,4 +1,4 @@
-import { and, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import type { Tx } from "../client";
 import { inventoryItems } from "../schema";
@@ -15,6 +15,9 @@ export type InventoryFilter = {
   kind?: string;
   /** Case-insensitive substring match on title or external id. */
   q?: string;
+  /** Inclusive price bounds in minor units; items without a price never match a bound. */
+  minPriceCents?: number;
+  maxPriceCents?: number;
   limit: number;
   offset: number;
 };
@@ -30,6 +33,12 @@ export function inventoryRepo(tx: Tx, orgId: string) {
       const conditions: (SQL | undefined)[] = [eq(inventoryItems.orgId, orgId)];
       if (filter.status) conditions.push(eq(inventoryItems.status, filter.status));
       if (filter.kind) conditions.push(eq(inventoryItems.kind, filter.kind));
+      if (filter.minPriceCents !== undefined) {
+        conditions.push(gte(inventoryItems.priceCents, filter.minPriceCents));
+      }
+      if (filter.maxPriceCents !== undefined) {
+        conditions.push(lte(inventoryItems.priceCents, filter.maxPriceCents));
+      }
       if (filter.q) {
         const pattern = `%${escapeLike(filter.q)}%`;
         conditions.push(
