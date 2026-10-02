@@ -13,6 +13,7 @@ let close: () => Promise<void>;
 let orgA: string;
 let orgB: string;
 let agentB: string;
+let conversationB: string;
 
 beforeAll(async () => {
   const url = process.env.DATABASE_URL;
@@ -34,6 +35,13 @@ beforeAll(async () => {
     insert into agents (org_id, name, model) values (${orgB}, 'B agent', 'm') returning id`;
   agentB = String(agent?.id);
   await db.$client`insert into agents (org_id, name, model) values (${orgA}, 'A agent', 'm')`;
+  const [conversation] = await db.$client`
+    insert into conversations (org_id, agent_id, channel) values (${orgB}, ${agentB}, 'dashboard_test')
+    returning id`;
+  conversationB = String(conversation?.id);
+  await db.$client`
+    insert into messages (org_id, conversation_id, role, content)
+    values (${orgB}, ${conversationB}, 'user', 'B secret question')`;
 });
 
 afterAll(async () => {
@@ -74,6 +82,30 @@ describe("tenant repository without RLS", () => {
     };
     const row = await db.transaction((tx) => createTenantRepo(tx, orgA).agents.create(smuggled));
     expect(row.orgId).toBe(orgA);
+  });
+});
+
+describe("conversations repository without RLS", () => {
+  const repoA = <T>(fn: (repo: ReturnType<typeof createTenantRepo>) => Promise<T>) =>
+    db.transaction((tx) => fn(createTenantRepo(tx, orgA)));
+
+  it("get of another org's conversation returns null", async () => {
+    expect(await repoA((r) => r.conversations.get(conversationB))).toBeNull();
+  });
+
+  it("never returns another org's messages, even by conversation id", async () => {
+    expect(await repoA((r) => r.conversations.recentMessages(conversationB, 50))).toEqual([]);
+  });
+
+  it("cannot append a message to another org's conversation", async () => {
+    await expect(
+      repoA((r) =>
+        r.conversations.addMessage({ conversationId: conversationB, role: "user", content: "x" }),
+      ),
+    ).rejects.toThrow();
+    const rows =
+      await db.$client`select content from messages where conversation_id = ${conversationB}`;
+    expect(rows.map((m) => m.content)).toEqual(["B secret question"]);
   });
 });
 
