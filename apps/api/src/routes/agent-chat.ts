@@ -116,7 +116,7 @@ export function agentChatRoutes(deps: {
       const { agent, conversation, history } = setup;
       const businessName = (await getOrganizationName(db, orgId)) ?? "this business";
 
-      return streamSSE(c, async (stream) => {
+      const response = streamSSE(c, async (stream) => {
         const send = (event: AgentChatEventName, data: object) =>
           stream.writeSSE({ event, data: JSON.stringify(data) }).catch(() => undefined);
         // Stop paying for tokens nobody will read once the browser goes away.
@@ -211,6 +211,13 @@ export function agentChatRoutes(deps: {
         });
         await send("done", { messageId: message.id, usage });
       });
+      // Proxies and CDNs compress (and therefore buffer) responses unless told not to: a
+      // gzipped event stream reached the browser in one piece at the end. no-transform stops
+      // that (Next's proxy honours it); X-Accel-Buffering does the same for nginx. Set on
+      // the response because streamSSE overwrites Cache-Control.
+      response.headers.set("Cache-Control", "no-cache, no-transform");
+      response.headers.set("X-Accel-Buffering", "no");
+      return response;
     },
   );
 

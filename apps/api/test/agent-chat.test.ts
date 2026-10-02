@@ -65,6 +65,9 @@ describe("test chat", () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("text/event-stream");
+    // Without no-transform, proxies gzip (and buffer) the stream: it arrives all at once.
+    expect(res.headers.get("cache-control")).toBe("no-cache, no-transform");
+    expect(res.headers.get("x-accel-buffering")).toBe("no");
     expect(events.map((e) => e.event)).toEqual(
       expect.arrayContaining(["start", "tool", "delta", "done"]) as unknown,
     );
