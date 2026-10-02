@@ -339,5 +339,42 @@
       "failed": "The agent could not answer. Try again.",
       "stopped": "Stopped."
     }
+  },
+  "conversations": {
+    "listLabel": "Conversations",
+    "noMessages": "No messages yet",
+    "messageCount": "{count, plural, one {# message} other {# messages}}",
+    "channels": {
+      "widget": "Widget",
+      "dashboard_test": "Test"
+    },
+    "statuses": {
+      "open": "Open",
+      "handed_off": "Handed off",
+      "closed": "Closed"
+    },
+    "roles": {
+      "human_agent": "Team",
+      "system": "System"
+    },
+    "visitor": "Visitor",
+    "tools": {
+      "search_inventory": "Searched the inventory",
+      "get_inventory_item": "Checked an item",
+      "search_knowledge": "Searched the documents"
+    },
+    "latency": "{ms} ms",
+    "toolFailed": "failed",
+    "toolInput": "Parameters",
+    "startedAt": "Started {date}",
+    "totalCost": "Total cost {cost}",
+    "emptyTitle": "No conversations yet",
+    "emptyDescription": "When someone talks to your agent, the conversation shows up here. For now you can try it from the test chat.",
+    "emptyAction": "Go to the test chat",
+    "notFound": "This conversation doesn't exist or was deleted.",
+    "pagination": "Pagination",
+    "range": "{from}–{to} of {total}",
+    "previous": "Previous",
+    "next": "Next"
   }
 }

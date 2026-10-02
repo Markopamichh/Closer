@@ -339,5 +339,42 @@
       "failed": "El agente no pudo responder. Prueba de nuevo.",
       "stopped": "Detenido."
     }
+  },
+  "conversations": {
+    "listLabel": "Conversaciones",
+    "noMessages": "Sin mensajes todavía",
+    "messageCount": "{count, plural, one {# mensaje} other {# mensajes}}",
+    "channels": {
+      "widget": "Widget",
+      "dashboard_test": "Prueba"
+    },
+    "statuses": {
+      "open": "Abierta",
+      "handed_off": "Derivada",
+      "closed": "Cerrada"
+    },
+    "roles": {
+      "human_agent": "Equipo",
+      "system": "Sistema"
+    },
+    "visitor": "Visitante",
+    "tools": {
+      "search_inventory": "Buscó en el inventario",
+      "get_inventory_item": "Revisó un ítem",
+      "search_knowledge": "Buscó en los documentos"
+    },
+    "latency": "{ms} ms",
+    "toolFailed": "falló",
+    "toolInput": "Parámetros",
+    "startedAt": "Iniciada el {date}",
+    "totalCost": "Costo total {cost}",
+    "emptyTitle": "Todavía no hay conversaciones",
+    "emptyDescription": "Cuando alguien hable con tu agente, la conversación aparece acá. Por ahora puedes probarlo desde el chat de prueba.",
+    "emptyAction": "Ir al chat de prueba",
+    "notFound": "Esta conversación no existe o fue eliminada.",
+    "pagination": "Paginación",
+    "range": "{from}–{to} de {total}",
+    "previous": "Anterior",
+    "next": "Siguiente"
   }
 }

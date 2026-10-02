@@ -2,6 +2,8 @@ import "server-only";
 import type { ListInventoryQuery, OrganizationSummary } from "@closer/shared";
 import {
   agentListSchema,
+  conversationDetailSchema,
+  conversationPageSchema,
   documentListSchema,
   inventoryPageSchema,
   meSchema,
@@ -21,12 +23,20 @@ export type { OrganizationSummary };
  * A 401 sends the user to /login; anything else unexpected reaches the error boundary.
  */
 async function apiGet<T>(path: string, schema: ZodType<T>): Promise<T> {
+  const result = await apiGetOptional(path, schema);
+  if (result === null) throw new Error(`API ${path} failed with 404`);
+  return result;
+}
+
+/** Like `apiGet`, but a 404 (deleted, or another org's id in the URL) is `null`. */
+async function apiGetOptional<T>(path: string, schema: ZodType<T>): Promise<T | null> {
   const cookieHeader = (await cookies()).toString();
   const res = await fetch(`${serverEnv.API_INTERNAL_URL}${path}`, {
     headers: { cookie: cookieHeader },
     cache: "no-store",
   });
   if (res.status === 401) redirect("/login");
+  if (res.status === 404) return null;
   if (!res.ok) throw new Error(`API ${path} failed with ${res.status}`);
   return schema.parse(await res.json());
 }
@@ -57,3 +67,17 @@ export const getDocuments = async (orgId: string) =>
 
 export const getAgents = async (orgId: string) =>
   (await apiGet(`/api/organizations/${encodeURIComponent(orgId)}/agents`, agentListSchema)).agents;
+
+export const getConversations = (orgId: string, query: { limit: number; offset: number }) =>
+  apiGet(
+    `/api/organizations/${encodeURIComponent(orgId)}/conversations?limit=${query.limit}&offset=${query.offset}`,
+    conversationPageSchema,
+  );
+
+export const getConversation = async (orgId: string, conversationId: string) =>
+  (
+    await apiGetOptional(
+      `/api/organizations/${encodeURIComponent(orgId)}/conversations/${encodeURIComponent(conversationId)}`,
+      conversationDetailSchema,
+    )
+  )?.conversation ?? null;
