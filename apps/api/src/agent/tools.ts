@@ -95,8 +95,9 @@ export function createAgentTools(deps: {
     defineTool({
       name: "get_inventory_item",
       description:
-        "Get the full details of one inventory item by its id (from search_inventory). Includes its " +
-        "status, so you can tell the customer if it was already sold or reserved.",
+        "Get one inventory item by id, with its full description and current status (e.g. sold). " +
+        "Search results already include price, attributes and status: only call this when you need " +
+        "the full description, or to check an item the customer mentioned again later.",
       input: z.object({ id: z.uuid() }),
       execute: async ({ id }) => {
         const item = await withTenant(db, orgId, (repo) => repo.inventory.get(id));
