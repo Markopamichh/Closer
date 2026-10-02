@@ -71,13 +71,15 @@ Announce every skill used (which one and why). This file wins over a skill; flag
 
 **Week 3 closed (2026-10-03):** OpenAI agent loop with read-only tenant-bound tools, cached policy prefix, SSE test chat (persisted, traced with exact cost, metered, rate-limited fail-closed), Agent page verified by Marko in a real browser, own theme provider (dropped `next-themes`). Checks + build green (464 tests), `security-review` found nothing exploitable.
 
+**3.7 Conversations (2026-10-02, missed at first close):** read-only `GET /conversations` (latest activity first, agent/channel filters) and `/conversations/:id` (thread, tool calls without output, per-reply and total cost), any role; Conversations page (master-detail, `?c=` deep link, native `<details>` for tool calls). Per-reply cost lives in `messages.metadata.costUsd` (replies before 2026-10-02 have none); add a `message_id` FK on `ai_traces` only if the Week 5 traces panel needs the join. Replying as a human and changing status come with the Week 4 handoff. Isolation cases added; `security-review` found nothing.
+
 Carry into Week 4/5:
 
 - Week 4 (widget): design CORS + CSRF together (explicit Origin checks) when cross-origin requests start; today CSRF rests on SameSite=Lax cookies + JSON-only bodies.
 - Week 5: per-org daily spend budget (today only 20 messages/min); trace tokens of completed rounds when the client aborts mid-reply; evals for `gpt-5-nano` quality and the literal `search_inventory` query (semantic inventory search if evals show misses).
 - If the dashboard throws "API /api/me failed with 500": the API's `/health` reports `database: unreachable` when Docker is down. Run `colima start && docker compose up -d`.
 
-Week 3 plan (approved 2026-10-01): 3.1 LLM client interface + OpenAI adapter + manual tool loop (max 5 tool rounds, abort on client disconnect, append-only history), 3.2 read-only tools (`search_inventory`, `get_inventory_item`, `search_knowledge`; org from the conversation, Zod-validated input, documents treated as untrusted), 3.3 stable cached prompt prefix, 3.4 SSE test-chat API with messages/tool_calls/ai_traces persistence, `ai_message` usage and per-org rate limit, 3.5 Agent page (config + streaming test chat), 3.6 close. Week 5: evals decide whether `gpt-5-nano` is good enough (candidates: `gpt-6-luna`, `gpt-5.6-luna`).
+Week 3 plan (approved 2026-10-01): 3.1 LLM client interface + OpenAI adapter + manual tool loop (max 5 tool rounds, abort on client disconnect, append-only history), 3.2 read-only tools (`search_inventory`, `get_inventory_item`, `search_knowledge`; org from the conversation, Zod-validated input, documents treated as untrusted), 3.3 stable cached prompt prefix, 3.4 SSE test-chat API with messages/tool_calls/ai_traces persistence, `ai_message` usage and per-org rate limit, 3.5 Agent page (config + streaming test chat), 3.6 close, 3.7 Conversations page. Week 5: evals decide whether `gpt-5-nano` is good enough (candidates: `gpt-6-luna`, `gpt-5.6-luna`).
 
 Decisions: embeddings via Voyage AI `voyage-4` (1024 dims, plain `fetch`), Supabase Storage (local disk driver in dev/tests), PDF + DOCX + TXT/MD, BullMQ worker as a separate process, dark mode with our own theme provider (was `next-themes`, dropped for React 19.3's script warning), i18n EN/ES with `next-intl` (browser detection + selector, cookie, no locale in URL).
 

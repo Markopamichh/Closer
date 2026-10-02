@@ -104,6 +104,9 @@ server-sent events.
   are capped; a stable shared policy prefix lets the provider cache it (~80% of input tokens
   from the second turn); every model request is recorded in `ai_traces` with its exact cost;
   and messages are rate-limited per org, failing closed because each one is paid.
+- **Every conversation is reviewable.** The Conversations page lists them by latest activity
+  and shows each thread with the tools the agent called (with their parameters and latency)
+  and what each reply cost. Every member can read it, viewers included.
 - **Streaming survives proxies.** The response sets `Cache-Control: no-transform`: without it
   Next's proxy gzipped the event stream and delivered it in one piece.
 
