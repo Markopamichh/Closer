@@ -67,15 +67,15 @@ Announce every skill used (which one and why). This file wins over a skill; flag
 - Run `pnpm format:check` as its own command before committing (never piped through `tail`).
 - Keep this project outside iCloud-synced folders (Desktop/Documents): sync creates `* 2` duplicates that corrupt `node_modules` and the Next.js cache.
 
-## Current status (Week 2 done; Week 3 in progress)
+## Current status (Week 3 done; Week 4 next)
 
-**Resume here (end of 2026-10-02):** steps 3.1–3.5 are done and pushed (agent loop, tools, cached prompt, SSE test chat API, Agent page with config + streamed test chat). Demo Motors (local dev DB) has an agent named "Dulce". Next, in order:
+**Week 3 closed (2026-10-03):** OpenAI agent loop with read-only tenant-bound tools, cached policy prefix, SSE test chat (persisted, traced with exact cost, metered, rate-limited fail-closed), Agent page verified by Marko in a real browser, own theme provider (dropped `next-themes`). Checks + build green (464 tests), `security-review` found nothing exploitable.
 
-1. [x] Replaced `next-themes` with our own provider (`useSyncExternalStore` over localStorage, same `theme` key) and a no-flash script in the server layout's `<head>`; a test runs that exact script against `parseTheme`/`isDark`.
-2. Marko tests the Agent page in a real browser (streaming text, tool indicators, stop, new conversation, viewer read-only). Not browser-verified yet: the read loop was replayed with the real parser against the live server instead.
-3. Step 3.6 close: full checks + build, `security-review` (prompt injection, tenant isolation, cost abuse), README "AI agent" section, CLAUDE.md.
-   Known gaps to carry: tokens of completed rounds are not traced when the client aborts mid-reply (Week 5 traces); `search_inventory` query is a literal title match (consider semantic inventory search if Week 5 evals show misses).
-   If the dashboard throws "API /api/me failed with 500": the API's `/health` reports `database: unreachable` when Docker is down. Run `colima start && docker compose up -d`.
+Carry into Week 4/5:
+
+- Week 4 (widget): design CORS + CSRF together (explicit Origin checks) when cross-origin requests start; today CSRF rests on SameSite=Lax cookies + JSON-only bodies.
+- Week 5: per-org daily spend budget (today only 20 messages/min); trace tokens of completed rounds when the client aborts mid-reply; evals for `gpt-5-nano` quality and the literal `search_inventory` query (semantic inventory search if evals show misses).
+- If the dashboard throws "API /api/me failed with 500": the API's `/health` reports `database: unreachable` when Docker is down. Run `colima start && docker compose up -d`.
 
 Week 3 plan (approved 2026-10-01): 3.1 LLM client interface + OpenAI adapter + manual tool loop (max 5 tool rounds, abort on client disconnect, append-only history), 3.2 read-only tools (`search_inventory`, `get_inventory_item`, `search_knowledge`; org from the conversation, Zod-validated input, documents treated as untrusted), 3.3 stable cached prompt prefix, 3.4 SSE test-chat API with messages/tool_calls/ai_traces persistence, `ai_message` usage and per-org rate limit, 3.5 Agent page (config + streaming test chat), 3.6 close. Week 5: evals decide whether `gpt-5-nano` is good enough (candidates: `gpt-6-luna`, `gpt-5.6-luna`).
 
@@ -125,7 +125,7 @@ docker compose up -d  # local Postgres + pgvector
 
 - [x] **Week 1**: monorepo, auth + organizations + roles, base Drizzle schema, CI, deployable skeleton
 - [x] **Week 2**: inventory CRUD + CSV import, document ingestion queue + embeddings
-- [ ] **Week 3**: agent runtime with tool use + streaming, test chat in dashboard
+- [x] **Week 3**: agent runtime with tool use + streaming, test chat in dashboard
 - [ ] **Week 4**: embeddable widget, leads, human handoff, visit scheduling
 - [ ] **Week 5**: AI traces panel, evals in CI, per-tenant rate limiting, Stripe (test mode) plans + usage metering
 - [ ] **Week 6**: landing, 2 demo tenants (dealership + real estate), README with architecture diagram, demo video

@@ -6,11 +6,12 @@ Multi-tenant SaaS that gives any business — a car dealership, a real estate ag
 sales agent for its website. The business uploads its inventory and documents; the agent
 answers with real data through tools, qualifies leads, books visits and hands off to a human.
 
-> **Status:** Week 2 of 6 done. Foundations (auth, organizations and roles, tenant
-> isolation, CI) plus the business's data: inventory with CSV import, document ingestion
-> into a vector index, semantic search, and the dashboard pages for both (EN/ES, dark mode).
-> Next: the agent itself, with tool use and streaming. The full README with an architecture
-> diagram and a demo lands in Week 6. See the roadmap in [`CLAUDE.md`](./CLAUDE.md).
+> **Status:** Week 3 of 6 done. Foundations (auth, organizations and roles, tenant
+> isolation, CI), the business's data (inventory with CSV import, documents in a vector
+> index), and now the AI sales agent: a tool-using agent that answers from that data, with a
+> streamed test chat in the dashboard. Next: the embeddable widget, leads and human handoff.
+> The full README with an architecture diagram and a demo lands in Week 6. See the roadmap
+> in [`CLAUDE.md`](./CLAUDE.md).
 
 ## Stack
 
@@ -21,7 +22,7 @@ answers with real data through tools, qualifies leads, books visits and hands of
 | API        | Hono on Node.js — all business logic lives here                |
 | Database   | Postgres (Supabase) + pgvector, Drizzle ORM                    |
 | Jobs       | BullMQ + Redis (document ingestion worker)                     |
-| AI         | Voyage AI embeddings (`voyage-4`, 1024 dims)                   |
+| AI         | OpenAI agent (`gpt-5-nano` default), Voyage AI embeddings      |
 | Auth       | Better Auth with the organization plugin                       |
 | Validation | Zod, shared between web and API                                |
 | Quality    | TypeScript strict, ESLint (type-aware), Vitest, GitHub Actions |
@@ -82,6 +83,35 @@ Owners upload PDF, DOCX, TXT or Markdown files; the agent answers from them.
 Chunks are exactly a document's searchable content. A re-index keeps the previous chunks
 searchable until they are atomically replaced; a failed job deletes them with the status.
 
+## AI sales agent
+
+Each business configures an agent (name, tone, rules, notes, model) and tests it from the
+dashboard. A reply is a loop: the model answers or calls a tool, the API runs the tool and
+feeds the result back, up to five rounds, then the answer streams to the browser as
+server-sent events.
+
+- **Tools are read-only and tenant-bound.** `search_inventory`, `get_inventory_item` and
+  `search_knowledge` are created per conversation with the org already bound; the org is
+  not a parameter the model can set. Model arguments are validated with Zod before a tool
+  runs, and a failing tool returns an error to the model without internals.
+- **Prompt injection has a small blast radius by design.** The policy marks tool results and
+  document passages as data, not instructions; owner rules and notes are fenced; and since
+  no tool writes data or calls out to third parties, the worst case is a wrong answer.
+- **The provider sits behind a small interface.** The OpenAI adapter streams the Responses
+  API with `store: false`, so conversations live in our database, tenant-isolated, not with
+  the provider. Tests run the whole loop against a scripted fake model.
+- **Cost is bounded, measured and visible.** Output, tool rounds, history and tool results
+  are capped; a stable shared policy prefix lets the provider cache it (~80% of input tokens
+  from the second turn); every model request is recorded in `ai_traces` with its exact cost;
+  and messages are rate-limited per org, failing closed because each one is paid.
+- **Streaming survives proxies.** The response sets `Cache-Control: no-transform`: without it
+  Next's proxy gzipped the event stream and delivered it in one piece.
+
+Live testing against the real model caught three bugs the fake model could not: the
+streamed response has no `output_text` field, a redundant tool round per question, and a
+literal title search that answered "no stock" for "a car under 20k". Each is fixed and
+covered by a test.
+
 ## Local development
 
 Requirements: Node.js ≥ 22, pnpm (via `corepack enable`), Docker with Compose.
@@ -98,6 +128,7 @@ pnpm dev               # web on :3000, API on :4000, ingestion worker
 
 Open http://localhost:3000, create an account and an organization.
 
+Set `OPENAI_API_KEY` to chat with the agent (without it the test chat answers 503).
 Without `VOYAGE_API_KEY`, an offline fake embedder is used: search then matches shared words,
 not meaning, and the dashboard says so. Uploaded files go to `LOCAL_STORAGE_DIR`.
 
