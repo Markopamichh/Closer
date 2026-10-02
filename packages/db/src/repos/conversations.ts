@@ -1,6 +1,7 @@
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, sql, sum } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 import type { Tx } from "../client";
-import { aiTraces, conversations, messages, toolCalls } from "../schema";
+import { agents, aiTraces, conversations, messages, toolCalls } from "../schema";
 
 type Conversation = typeof conversations.$inferSelect;
 type Message = typeof messages.$inferSelect;
@@ -27,6 +28,18 @@ export type NewAiTrace = {
   error?: string | null;
 };
 
+export type ConversationFilter = {
+  agentId?: string;
+  channel?: Conversation["channel"];
+  limit: number;
+  offset: number;
+};
+
+/** Characters of the last message shown in a conversation list row. */
+const PREVIEW_CHARS = 160;
+/** Upper bound for one conversation thread; a test chat never gets near it. */
+const MAX_THREAD_MESSAGES = 500;
+
 export function conversationsRepo(tx: Tx, orgId: string) {
   const scope = (id: string) => and(eq(conversations.orgId, orgId), eq(conversations.id, id));
 
@@ -38,6 +51,67 @@ export function conversationsRepo(tx: Tx, orgId: string) {
         .returning();
       if (!row) throw new Error("conversations.create: insert returned no row");
       return row;
+    },
+
+    /** Newest activity first, with the agent name, message count and a last-message preview. */
+    list: async (filter: ConversationFilter) => {
+      const conditions: (SQL | undefined)[] = [eq(conversations.orgId, orgId)];
+      if (filter.agentId) conditions.push(eq(conversations.agentId, filter.agentId));
+      if (filter.channel) conditions.push(eq(conversations.channel, filter.channel));
+      const where = and(...conditions);
+
+      const [rows, [totals]] = await Promise.all([
+        tx
+          .select({
+            conversation: conversations,
+            agentName: agents.name,
+            messageCount: sql<number>`(
+              select count(*)::int from ${messages}
+              where ${messages.orgId} = ${conversations.orgId}
+                and ${messages.conversationId} = ${conversations.id}
+            )`,
+            lastMessage: sql<string | null>`(
+              select left(${messages.content}, ${PREVIEW_CHARS}) from ${messages}
+              where ${messages.orgId} = ${conversations.orgId}
+                and ${messages.conversationId} = ${conversations.id}
+              order by ${messages.createdAt} desc, ${messages.id} desc
+              limit 1
+            )`,
+          })
+          .from(conversations)
+          .innerJoin(
+            agents,
+            and(eq(agents.orgId, conversations.orgId), eq(agents.id, conversations.agentId)),
+          )
+          .where(where)
+          // A conversation without messages yet sorts by when it was opened.
+          .orderBy(
+            desc(sql`coalesce(${conversations.lastMessageAt}, ${conversations.createdAt})`),
+            desc(conversations.id),
+          )
+          .limit(filter.limit)
+          .offset(filter.offset),
+        tx.select({ total: count() }).from(conversations).where(where),
+      ]);
+      return { rows, total: totals?.total ?? 0 };
+    },
+
+    /** The whole thread, oldest first (capped), for reading in the dashboard. */
+    thread: (conversationId: string) =>
+      tx
+        .select()
+        .from(messages)
+        .where(and(eq(messages.orgId, orgId), eq(messages.conversationId, conversationId)))
+        .orderBy(asc(messages.createdAt), asc(messages.id))
+        .limit(MAX_THREAD_MESSAGES),
+
+    /** Total model spend on a conversation, failed calls included. */
+    costUsd: async (conversationId: string) => {
+      const [row] = await tx
+        .select({ total: sum(aiTraces.costUsd) })
+        .from(aiTraces)
+        .where(and(eq(aiTraces.orgId, orgId), eq(aiTraces.conversationId, conversationId)));
+      return Number(row?.total ?? 0);
     },
 
     get: async (id: string) => {

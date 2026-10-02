@@ -180,7 +180,7 @@ export function agentChatRoutes(deps: {
             conversationId: conversation.id,
             role: "assistant",
             content: run.text,
-            metadata: { items: run.newItems, status: run.status },
+            metadata: { items: run.newItems, status: run.status, costUsd: usage.costUsd },
           });
           await repo.conversations.recordToolCalls(
             saved.id,

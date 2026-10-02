@@ -15,10 +15,18 @@ type ErrorBody = { error: { code: string; message: string; requestId: string } }
 
 let ctx: TestContext;
 let w: World;
+let conversationB: string;
 
 beforeAll(async () => {
   ctx = createTestContext();
   w = await buildWorld(ctx);
+  const [row] = await ctx.sql<{ id: string }[]>`
+    insert into conversations (org_id, agent_id, channel)
+    values (${w.orgB}, ${w.agentB.id}, 'dashboard_test') returning id`;
+  if (!row) throw new Error("seed conversation failed");
+  conversationB = row.id;
+  await ctx.sql`insert into messages (org_id, conversation_id, role, content)
+    values (${w.orgB}, ${conversationB}, 'user', 'B secret question')`;
 });
 
 afterAll(async () => {
@@ -129,6 +137,16 @@ const attacksOnOrgB: Attack[] = [
     path: () => `/api/organizations/${w.orgB}/documents/search?q=rentals`,
   },
   {
+    name: "list B's conversations",
+    method: "GET",
+    path: () => `/api/organizations/${w.orgB}/conversations`,
+  },
+  {
+    name: "read B's conversation",
+    method: "GET",
+    path: () => `/api/organizations/${w.orgB}/conversations/${conversationB}`,
+  },
+  {
     name: "chat with B's agent",
     method: "POST",
     path: () => `/api/organizations/${w.orgB}/agents/${w.agentB.id}/test-chat`,
@@ -214,6 +232,30 @@ describe("B's resource ids through A's routes (IDOR)", () => {
       expect(await snapshotOrgB()).toEqual(before);
     },
   );
+});
+
+describe("B's conversation through A's routes (IDOR)", () => {
+  it("owner of A cannot read B's conversation via A's org (404)", async () => {
+    const res = await w.a.owner.request(
+      `/api/organizations/${w.orgA}/conversations/${conversationB}`,
+    );
+    expect(res.status).toBe(404);
+    expect((await json<ErrorBody>(res)).error.message).toBe("Conversation not found");
+  });
+
+  it("A's conversation list never includes B's conversation", async () => {
+    const res = await w.a.owner.request(`/api/organizations/${w.orgA}/conversations`);
+    expect(res.status).toBe(200);
+    const { conversations } = await json<{ conversations: { id: string }[] }>(res);
+    expect(conversations.map((c) => c.id)).not.toContain(conversationB);
+  });
+
+  it("owner of B reads it (control)", async () => {
+    const res = await w.ownerB.request(
+      `/api/organizations/${w.orgB}/conversations/${conversationB}`,
+    );
+    expect(res.status).toBe(200);
+  });
 });
 
 describe("responses do not reveal whether another org exists", () => {

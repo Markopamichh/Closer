@@ -3,3 +3,4 @@ export * from "./inventory";
 export * from "./organizations";
 export * from "./roles";
 export * from "./documents";
+export * from "./conversations";

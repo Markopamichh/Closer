@@ -12,6 +12,7 @@ import { requestContext } from "./middleware/request-context";
 import type { DocumentQueue } from "./queue/documents";
 import { agentChatRoutes } from "./routes/agent-chat";
 import { agentRoutes } from "./routes/agents";
+import { conversationRoutes } from "./routes/conversations";
 import { documentRoutes } from "./routes/documents";
 import { healthRoutes } from "./routes/health";
 import { inventoryRoutes } from "./routes/inventory";
@@ -53,6 +54,7 @@ export function createApp(deps: AppDeps) {
   app.route("/api/organizations", organizationRoutes(deps));
   app.route("/api/organizations/:orgId/agents/:agentId/test-chat", agentChatRoutes(deps));
   app.route("/api/organizations/:orgId/agents", agentRoutes(deps));
+  app.route("/api/organizations/:orgId/conversations", conversationRoutes(deps));
   app.route("/api/organizations/:orgId/inventory", inventoryRoutes(deps));
   app.route("/api/organizations/:orgId/documents", documentRoutes(deps));
 
