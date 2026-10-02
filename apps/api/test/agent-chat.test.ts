@@ -252,6 +252,34 @@ describe("failures", () => {
     }
   });
 
+  it("fails closed when the rate limiter is down: no paid request without a quota check", async () => {
+    let modelCalls = 0;
+    const broken = createTestContext({
+      llm: createScriptedLlm(() => {
+        modelCalls++;
+        return { text: "ok" };
+      }),
+      chatLimiter: { consume: () => Promise.reject(new Error("redis down")) },
+    });
+    try {
+      const owner = await signUp(broken.app, "chat-limiter-down");
+      const org = await owner.request("/api/organizations", {
+        method: "POST",
+        body: { name: "Down" },
+      });
+      const orgId = (await json<{ id: string }>(org)).id;
+      const agent = await owner.request(`/api/organizations/${orgId}/agents`, {
+        method: "POST",
+        body: { name: "A" },
+      });
+      const agentId = (await json<{ agent: { id: string } }>(agent)).agent.id;
+      expect((await chat(owner, { message: "hi" }, chatPath(orgId, agentId))).res.status).toBe(503);
+      expect(modelCalls).toBe(0);
+    } finally {
+      await broken.close();
+    }
+  });
+
   it("limits messages per organization (429 with Retry-After)", async () => {
     const limited = createTestContext({
       llm: createScriptedLlm(() => ({ text: "ok" })),

@@ -78,13 +78,16 @@ export function agentChatRoutes(deps: {
       const logger = c.get("logger");
       if (!llm) throw new AppError("service_unavailable", "The agent model is not configured");
 
+      // Fails closed, unlike knowledge search: every message spends model tokens, so a
+      // Redis outage must not turn into unlimited paid requests. A short 503 is cheaper.
       let quota;
       try {
         quota = await chatLimiter.consume(`chat:${orgId}`);
       } catch (err) {
-        logger.warn({ err }, "chat rate limiter unavailable; allowing request");
+        logger.error({ err }, "chat rate limiter unavailable; rejecting request");
+        throw new AppError("service_unavailable", "The agent is temporarily unavailable");
       }
-      if (quota && !quota.allowed) {
+      if (!quota.allowed) {
         c.header("Retry-After", String(quota.retryAfterSeconds));
         throw new AppError("rate_limited", "Too many messages, try again shortly");
       }
