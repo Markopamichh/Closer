@@ -49,7 +49,7 @@ export const agents = pgTable(
     systemPrompt: text().notNull().default(""),
     tone: text().notNull().default("friendly"),
     rules: jsonb().$type<string[]>().notNull().default([]),
-    model: text().notNull(),
+    model: text().notNull().default("gpt-5-nano"),
     isActive: boolean().notNull().default(true),
     ...timestamps,
   },

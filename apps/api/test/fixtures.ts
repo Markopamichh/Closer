@@ -43,7 +43,7 @@ async function createOrg(client: Client, name: string): Promise<string> {
 async function createAgent(client: Client, orgId: string, name: string): Promise<Agent> {
   const res = await client.request(`/api/organizations/${orgId}/agents`, {
     method: "POST",
-    body: { name, model: "claude-sonnet-5" },
+    body: { name, model: "gpt-5-nano" },
   });
   if (res.status !== 201) throw new Error(`create agent failed: ${res.status}`);
   return (await json<{ agent: Agent }>(res)).agent;

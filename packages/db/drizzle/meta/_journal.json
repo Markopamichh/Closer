@@ -29,6 +29,20 @@
       "when": 1790798022060,
       "tag": "0003_require_pgvector_0_8",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790911180776,
+      "tag": "0004_agent_models",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790911229872,
+      "tag": "0005_blue_grey_gargoyle",
+      "breakpoints": true
     }
   ]
 }

@@ -59,7 +59,7 @@ const attacksOnOrgB: Attack[] = [
     name: "create an agent in B",
     method: "POST",
     path: () => `/api/organizations/${w.orgB}/agents`,
-    body: () => ({ name: "Injected", model: "claude-sonnet-5" }),
+    body: () => ({ name: "Injected", model: "gpt-5-nano" }),
   },
   {
     name: "update B's agent",
@@ -235,7 +235,7 @@ describe("org_id is never taken from the request body", () => {
 
     const res = await w.a.owner.request(`/api/organizations/${w.orgA}/agents`, {
       method: "POST",
-      body: { name: "Smuggled", model: "claude-sonnet-5", orgId: w.orgB },
+      body: { name: "Smuggled", model: "gpt-5-nano", orgId: w.orgB },
     });
 
     expect(res.status).toBe(201);
@@ -306,7 +306,7 @@ describe("roles within a tenant", () => {
   async function disposableAgent(): Promise<string> {
     const res = await w.a.owner.request(agentsPath(), {
       method: "POST",
-      body: { name: "Disposable", model: "claude-sonnet-5" },
+      body: { name: "Disposable", model: "gpt-5-nano" },
     });
     return (await json<{ agent: { id: string } }>(res)).agent.id;
   }
@@ -326,7 +326,7 @@ describe("roles within a tenant", () => {
   ] as const)("%s creating an agent → %i", async (role, status) => {
     const res = await w.a[role].request(agentsPath(), {
       method: "POST",
-      body: { name: `By ${role}`, model: "claude-sonnet-5" },
+      body: { name: `By ${role}`, model: "gpt-5-nano" },
     });
     expect(res.status).toBe(status);
   });
