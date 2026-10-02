@@ -102,7 +102,7 @@ export function conversationRoutes({ auth, db }: { auth: Auth; db: Db }) {
         error: call.error,
         latencyMs: call.latencyMs,
       })),
-      costUsd: message.role === "assistant" ? replyCost(message.metadata) : null,
+      costUsd: replyCost(message.metadata),
       createdAt: message.createdAt.toISOString(),
     }));
     const last = detail.thread.at(-1);
