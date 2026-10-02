@@ -16,7 +16,7 @@ Portfolio project: code quality, architecture decisions and docs matter as much 
 - `packages/config`: shared tsconfig, eslint, prettier
 - Auth: Better Auth + organization plugin (roles: `owner`, `agent`, `viewer`)
 - Validation: Zod · Tests: Vitest · Logging: pino (JSON) · CI: GitHub Actions
-- Later: BullMQ + Redis, Claude API (tool use, SSE streaming)
+- Agent LLM: OpenAI (`openai` SDK), default model `gpt-5-nano` (cheapest: $0.05 in / $0.005 cached / $0.40 out per 1M tokens, checked 2026-10-01 on the official pricing page); per-agent `model` column, behind our own small LLM interface so tests use a scripted fake
 
 ## Conventions
 
@@ -52,7 +52,7 @@ Announce every skill used (which one and why). This file wins over a skill; flag
 - `supabase-schema`, `db-audit`: schema/migration design and RLS/index audits. Our model wins: Drizzle migrations, RLS keyed on `app.org_id`, `closer_app` role (not `auth.uid()` or supabase-js).
 - `spec-feature`, `grill-me`: shaping a feature or a week's plan before implementing.
 - `ui-ux-pro-max`, `ui-styling`, `design-system`: web pages (Inventory, Knowledge, dashboard, landing), shadcn/Tailwind, theme tokens.
-- `claude-api`: agent runtime, tool use, streaming, prompt caching (Week 3+).
+- `claude-api`: only if the agent moves to Claude. The agent runs on OpenAI (Marko's call: existing credits); verify OpenAI SDK usage, model ids and prices against the official docs, never from memory.
 - `diagnose`: non-obvious bugs, before guessing at fixes.
 - `security-review`, `code-review`, `simplify`, `code-audit`, `ts-check`: closing each week.
 - `perf-check`: dashboard and query performance passes. `dataviz`: usage/traces charts (Week 5).
@@ -67,7 +67,9 @@ Announce every skill used (which one and why). This file wins over a skill; flag
 - Run `pnpm format:check` as its own command before committing (never piped through `tail`).
 - Keep this project outside iCloud-synced folders (Desktop/Documents): sync creates `* 2` duplicates that corrupt `node_modules` and the Next.js cache.
 
-## Current status (Week 2 done; Week 3 next)
+## Current status (Week 2 done; Week 3 in progress)
+
+Week 3 plan (approved 2026-10-01): 3.1 LLM client interface + OpenAI adapter + manual tool loop (max 5 tool rounds, abort on client disconnect, append-only history), 3.2 read-only tools (`search_inventory`, `get_inventory_item`, `search_knowledge`; org from the conversation, Zod-validated input, documents treated as untrusted), 3.3 stable cached prompt prefix, 3.4 SSE test-chat API with messages/tool_calls/ai_traces persistence, `ai_message` usage and per-org rate limit, 3.5 Agent page (config + streaming test chat), 3.6 close. Week 5: evals decide whether `gpt-5-nano` is good enough (candidates: `gpt-6-luna`, `gpt-5.6-luna`).
 
 Decisions: embeddings via Voyage AI `voyage-4` (1024 dims, plain `fetch`), Supabase Storage (local disk driver in dev/tests), PDF + DOCX + TXT/MD, BullMQ worker as a separate process, dark mode with `next-themes`, i18n EN/ES with `next-intl` (browser detection + selector, cookie, no locale in URL).
 
