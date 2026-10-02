@@ -105,7 +105,7 @@ describe("conversations repository without RLS", () => {
     ).rejects.toThrow();
     const rows =
       await db.$client`select content from messages where conversation_id = ${conversationB}`;
-    expect(rows.map((m) => m.content)).toEqual(["B secret question"]);
+    expect(rows.map((m) => String(m.content))).toEqual(["B secret question"]);
   });
 });
 
