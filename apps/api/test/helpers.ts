@@ -37,6 +37,8 @@ export function createTestContext(
     searchLimiter?: RateLimiter;
     llm?: LlmClient | null;
     chatLimiter?: RateLimiter;
+    dailyChatLimiter?: RateLimiter;
+    visitorChatLimiter?: RateLimiter;
   } = {},
 ): TestContext {
   const env = loadEnv();
@@ -56,13 +58,15 @@ export function createTestContext(
       limit: 1000,
       windowSeconds: 60,
     });
-  const chatLimiter =
-    overrides.chatLimiter ??
+  const generous = () =>
     createRedisRateLimiter(redis, {
       prefix: `${env.QUEUE_PREFIX}:${crypto.randomUUID()}`,
       limit: 1000,
       windowSeconds: 60,
     });
+  const chatLimiter = overrides.chatLimiter ?? generous();
+  const dailyChatLimiter = overrides.dailyChatLimiter ?? generous();
+  const visitorChatLimiter = overrides.visitorChatLimiter ?? generous();
   const app = createApp({
     db,
     auth,
@@ -73,6 +77,8 @@ export function createTestContext(
     searchLimiter,
     llm: overrides.llm === undefined ? null : overrides.llm,
     chatLimiter,
+    dailyChatLimiter,
+    visitorChatLimiter,
   });
   const ownerUrl = process.env.DATABASE_URL;
   if (!ownerUrl) throw new Error("DATABASE_URL missing");

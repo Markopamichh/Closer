@@ -73,6 +73,16 @@ export const agentChatRequestSchema = z.object({
 });
 export type AgentChatRequest = z.infer<typeof agentChatRequestSchema>;
 
+/** Public key format (see migration 0006): anything else is a 404 without a lookup. */
+export const widgetPublicKeySchema = z.string().regex(/^pk_[0-9a-f]{32}$/);
+
+/**
+ * A widget visitor's message. `visitorId` is random per browser (kept by the widget) and
+ * must match to continue a conversation, so one visitor can never read another's chat.
+ */
+export const widgetChatRequestSchema = agentChatRequestSchema.extend({ visitorId: z.uuid() });
+export type WidgetChatRequest = z.infer<typeof widgetChatRequestSchema>;
+
 /** Server-sent events of a test chat reply, in order: start, (delta | tool)*, done | error. */
 export const agentChatEventSchemas = {
   start: z.object({ conversationId: z.uuid() }),

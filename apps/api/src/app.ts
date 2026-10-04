@@ -18,6 +18,7 @@ import { healthRoutes } from "./routes/health";
 import { inventoryRoutes } from "./routes/inventory";
 import { meRoutes } from "./routes/me";
 import { organizationRoutes } from "./routes/organizations";
+import { widgetRoutes } from "./routes/widget";
 
 export type AppDeps = {
   db: Db;
@@ -32,6 +33,10 @@ export type AppDeps = {
   llm: LlmClient | null;
   /** Per-org limit on agent messages (each one costs model tokens). */
   chatLimiter: RateLimiter;
+  /** Per-org daily cap on agent messages, test chat and widget combined: the spend ceiling. */
+  dailyChatLimiter: RateLimiter;
+  /** Per-visitor limit on the public widget, so one visitor can't use up the org's quota. */
+  visitorChatLimiter: RateLimiter;
 };
 
 /** Builds the HTTP app from its dependencies, so tests can inject their own. */
@@ -57,6 +62,7 @@ export function createApp(deps: AppDeps) {
   app.route("/api/organizations/:orgId/conversations", conversationRoutes(deps));
   app.route("/api/organizations/:orgId/inventory", inventoryRoutes(deps));
   app.route("/api/organizations/:orgId/documents", documentRoutes(deps));
+  app.route("/api/public/widget", widgetRoutes(deps));
 
   return app;
 }

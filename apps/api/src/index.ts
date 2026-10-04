@@ -21,6 +21,9 @@ const documents = createDocumentQueue(env.REDIS_URL, env.QUEUE_PREFIX);
 const redis = new Redis(env.REDIS_URL);
 const SEARCHES_PER_MINUTE = 30;
 const AGENT_MESSAGES_PER_MINUTE = 20;
+// The spend ceiling per org until plans exist (Week 5): ~$0.10/day at gpt-5-nano prices.
+const AGENT_MESSAGES_PER_DAY = 500;
+const WIDGET_MESSAGES_PER_VISITOR_PER_MINUTE = 6;
 const app = createApp({
   db,
   auth,
@@ -37,6 +40,16 @@ const app = createApp({
   chatLimiter: createRedisRateLimiter(redis, {
     prefix: `${env.QUEUE_PREFIX}:chat`,
     limit: AGENT_MESSAGES_PER_MINUTE,
+    windowSeconds: 60,
+  }),
+  dailyChatLimiter: createRedisRateLimiter(redis, {
+    prefix: `${env.QUEUE_PREFIX}:chat-daily`,
+    limit: AGENT_MESSAGES_PER_DAY,
+    windowSeconds: 24 * 60 * 60,
+  }),
+  visitorChatLimiter: createRedisRateLimiter(redis, {
+    prefix: `${env.QUEUE_PREFIX}:chat-visitor`,
+    limit: WIDGET_MESSAGES_PER_VISITOR_PER_MINUTE,
     windowSeconds: 60,
   }),
 });

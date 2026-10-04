@@ -44,7 +44,11 @@ export function conversationsRepo(tx: Tx, orgId: string) {
   const scope = (id: string) => and(eq(conversations.orgId, orgId), eq(conversations.id, id));
 
   return {
-    create: async (input: { agentId: string; channel: Conversation["channel"] }) => {
+    create: async (input: {
+      agentId: string;
+      channel: Conversation["channel"];
+      visitorId?: string;
+    }) => {
       const [row] = await tx
         .insert(conversations)
         .values({ ...input, orgId })
