@@ -1,6 +1,7 @@
 import type { EmbeddingProvider, LlmClient } from "@closer/ai";
 import type { Db } from "@closer/db";
-import { lookupWidget, withTenant } from "@closer/db";
+import { getOrganizationName, lookupWidget, withTenant } from "@closer/db";
+import type { WidgetConfig } from "@closer/shared";
 import { widgetChatRequestSchema, widgetPublicKeySchema } from "@closer/shared";
 import { Hono } from "hono";
 import { consumeChatQuotas, HISTORY_MESSAGES, streamAgentReply } from "../agent/reply";
@@ -37,6 +38,19 @@ export function widgetRoutes(deps: {
     if (!widget?.enabled) throw notFound("Widget");
     return { ...widget, publicKey: key.data };
   };
+
+  /** Read by the embed page (server-side) to render the header and set frame-ancestors. */
+  r.get("/:publicKey", async (c) => {
+    const widget = await resolve(c.req.param("publicKey"));
+    const agent = await withTenant(db, widget.orgId, (repo) => repo.agents.get(widget.agentId));
+    if (!agent) throw notFound("Widget");
+    const body: WidgetConfig = {
+      agentName: agent.name,
+      businessName: (await getOrganizationName(db, widget.orgId)) ?? "",
+      allowedOrigins: widget.allowedOrigins,
+    };
+    return c.json(body);
+  });
 
   r.post("/:publicKey/chat", validate("json", widgetChatRequestSchema), async (c) => {
     const body = c.req.valid("json");

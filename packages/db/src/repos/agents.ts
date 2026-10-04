@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import type { Tx } from "../client";
 import { agents } from "../schema";
 
@@ -28,6 +28,16 @@ export function agentsRepo(tx: Tx, orgId: string) {
 
     update: async (id: string, patch: AgentPatch) => {
       const [row] = await tx.update(agents).set(patch).where(scope(id)).returning();
+      return row ?? null;
+    },
+
+    /** New random public key (same format as the column default); the old one stops working. */
+    rotatePublicKey: async (id: string) => {
+      const [row] = await tx
+        .update(agents)
+        .set({ publicKey: sql`'pk_' || replace(gen_random_uuid()::text, '-', '')` })
+        .where(scope(id))
+        .returning();
       return row ?? null;
     },
 

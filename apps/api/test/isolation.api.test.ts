@@ -36,7 +36,8 @@ afterAll(async () => {
 /** Ground truth for org B, read with the owner connection (bypasses RLS). */
 async function snapshotOrgB() {
   const agents = await ctx.sql`
-    select id, name, tone, is_active, updated_at from agents where org_id = ${w.orgB} order by id`;
+    select id, name, tone, is_active, public_key, allowed_origins, updated_at
+    from agents where org_id = ${w.orgB} order by id`;
   const inventory = await ctx.sql`
     select id, title, status, price_cents, attributes, updated_at
     from inventory_items where org_id = ${w.orgB} order by id`;
@@ -137,6 +138,11 @@ const attacksOnOrgB: Attack[] = [
     path: () => `/api/organizations/${w.orgB}/documents/search?q=rentals`,
   },
   {
+    name: "rotate B's widget key",
+    method: "POST",
+    path: () => `/api/organizations/${w.orgB}/agents/${w.agentB.id}/widget/rotate-key`,
+  },
+  {
     name: "list B's conversations",
     method: "GET",
     path: () => `/api/organizations/${w.orgB}/conversations`,
@@ -217,6 +223,11 @@ describe("B's resource ids through A's routes (IDOR)", () => {
       name: "delete",
       method: "DELETE",
       path: () => `/api/organizations/${w.orgA}/agents/${w.agentB.id}`,
+    },
+    {
+      name: "rotate the widget key of",
+      method: "POST",
+      path: () => `/api/organizations/${w.orgA}/agents/${w.agentB.id}/widget/rotate-key`,
     },
   ];
 

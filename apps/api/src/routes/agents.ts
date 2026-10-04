@@ -36,6 +36,10 @@ function toDto(agent: AgentRow): AgentDto {
     rules: agent.rules,
     model,
     isActive: agent.isActive,
+    timezone: agent.timezone,
+    widgetEnabled: agent.widgetEnabled,
+    publicKey: agent.publicKey,
+    allowedOrigins: agent.allowedOrigins,
     createdAt: agent.createdAt.toISOString(),
     updatedAt: agent.updatedAt.toISOString(),
   };
@@ -71,6 +75,15 @@ export function agentRoutes({ auth, db }: { auth: Auth; db: Db }) {
     const agentId = resourceId(c.req.param("agentId"), "Agent");
     const patch = c.req.valid("json");
     const agent = await withTenant(db, orgId, (repo) => repo.agents.update(agentId, patch));
+    if (!agent) throw notFound("Agent");
+    return c.json({ agent: toDto(agent) });
+  });
+
+  // Invalidates every embed of the old key at once (e.g. after it was pasted somewhere wrong).
+  r.post("/:agentId/widget/rotate-key", requireRole(db, "owner"), async (c) => {
+    const { orgId } = c.get("membership");
+    const agentId = resourceId(c.req.param("agentId"), "Agent");
+    const agent = await withTenant(db, orgId, (repo) => repo.agents.rotatePublicKey(agentId));
     if (!agent) throw notFound("Agent");
     return c.json({ agent: toDto(agent) });
   });
