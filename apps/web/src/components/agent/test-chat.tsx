@@ -2,25 +2,12 @@
 
 import { Loader2, RotateCcw, Search, Send, Square } from "lucide-react";
 import { useFormatter, useMessages, useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { createAgentChatParser } from "@/lib/sse";
+import { useAgentChat } from "@/lib/use-agent-chat";
 import { cn } from "@/lib/utils";
-
-type ErrorKey = "rateLimited" | "notConfigured" | "unavailable" | "failed" | "stopped";
-type Turn =
-  | { role: "user"; text: string }
-  | {
-      role: "assistant";
-      text: string;
-      tools: { name: string; done: boolean }[];
-      usage?: { tokens: number; costUsd: number };
-      error?: ErrorKey;
-    };
-
-const statusError: Record<number, ErrorKey> = { 429: "rateLimited", 503: "notConfigured" };
 
 export function TestChat({
   orgId,
@@ -35,97 +22,14 @@ export function TestChat({
   const format = useFormatter();
   // Widened on purpose: tool names come from the server at runtime.
   const toolLabels: Record<string, string | undefined> = useMessages().agentPage.tools;
-  const [turns, setTurns] = useState<Turn[]>([]);
-  const [conversationId, setConversationId] = useState<string | undefined>();
-  const [pending, setPending] = useState(false);
-  const controller = useRef<AbortController | null>(null);
+  const { turns, pending, send, stop, reset } = useAgentChat({
+    url: `/api/organizations/${encodeURIComponent(orgId)}/agents/${agentId}/test-chat`,
+  });
   const bottom = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ block: "end" });
   }, [turns]);
-
-  // Leaving the page cancels an in-flight reply, so no tokens are spent for nobody.
-  useEffect(() => () => controller.current?.abort(), []);
-
-  const updateReply = (change: (reply: Extract<Turn, { role: "assistant" }>) => void) => {
-    setTurns((current) => {
-      const next = [...current];
-      const last = next.at(-1);
-      if (last?.role === "assistant") {
-        const copy = { ...last, tools: [...last.tools] };
-        change(copy);
-        next[next.length - 1] = copy;
-      }
-      return next;
-    });
-  };
-
-  async function send(message: string) {
-    const abort = new AbortController();
-    controller.current = abort;
-    setPending(true);
-    setTurns((current) => [
-      ...current,
-      { role: "user", text: message },
-      { role: "assistant", text: "", tools: [] },
-    ]);
-    try {
-      const res = await fetch(
-        `/api/organizations/${encodeURIComponent(orgId)}/agents/${agentId}/test-chat`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, ...(conversationId ? { conversationId } : {}) }),
-          signal: abort.signal,
-        },
-      );
-      if (!res.ok || !res.body) {
-        updateReply((r) => (r.error = statusError[res.status] ?? "failed"));
-        return;
-      }
-      const parse = createAgentChatParser((event) => {
-        switch (event.event) {
-          case "start":
-            setConversationId(event.data.conversationId);
-            break;
-          case "delta":
-            updateReply((r) => (r.text += event.data.text));
-            break;
-          case "tool":
-            updateReply((r) => {
-              if (event.data.phase === "start")
-                r.tools.push({ name: event.data.name, done: false });
-              else {
-                const tool = r.tools.find((x) => x.name === event.data.name && !x.done);
-                if (tool) tool.done = true;
-              }
-            });
-            break;
-          case "done":
-            updateReply((r) => {
-              const u = event.data.usage;
-              r.usage = { tokens: u.inputTokens + u.outputTokens, costUsd: u.costUsd };
-            });
-            break;
-          case "error":
-            updateReply((r) => (r.error = event.data.code));
-            break;
-        }
-      });
-      const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        parse(value);
-      }
-    } catch {
-      updateReply((r) => (r.error = abort.signal.aborted ? "stopped" : "failed"));
-    } finally {
-      setPending(false);
-      controller.current = null;
-    }
-  }
 
   function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -147,10 +51,7 @@ export function TestChat({
           variant="outline"
           size="sm"
           disabled={pending || turns.length === 0}
-          onClick={() => {
-            setTurns([]);
-            setConversationId(undefined);
-          }}
+          onClick={reset}
         >
           <RotateCcw className="size-4" aria-hidden />
           {t("newConversation")}
@@ -238,7 +139,7 @@ export function TestChat({
             }}
           />
           {pending ? (
-            <Button type="button" variant="outline" onClick={() => controller.current?.abort()}>
+            <Button type="button" variant="outline" onClick={stop}>
               <Square className="size-4" aria-hidden />
               {t("stop")}
             </Button>

@@ -376,5 +376,20 @@
     "range": "{from}–{to} de {total}",
     "previous": "Anterior",
     "next": "Siguiente"
+  },
+  "widget": {
+    "close": "Cerrar chat",
+    "greeting": "¡Hola! Soy {agent}, de {business}. ¿En qué te puedo ayudar?",
+    "you": "Tú",
+    "typing": "Escribiendo…",
+    "placeholder": "Escribe tu mensaje…",
+    "send": "Enviar",
+    "errors": {
+      "rateLimited": "Muchos mensajes seguidos. Espera un momento y vuelve a intentar.",
+      "notConfigured": "El chat no está disponible en este momento.",
+      "unavailable": "El chat está ocupado. Prueba de nuevo enseguida.",
+      "failed": "No pudimos responder. Prueba de nuevo.",
+      "stopped": "Detenido."
+    }
   }
 }

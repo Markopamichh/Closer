@@ -376,5 +376,20 @@
     "range": "{from}–{to} of {total}",
     "previous": "Previous",
     "next": "Next"
+  },
+  "widget": {
+    "close": "Close chat",
+    "greeting": "Hi! I'm {agent} from {business}. How can I help?",
+    "you": "You",
+    "typing": "Typing…",
+    "placeholder": "Type your message…",
+    "send": "Send",
+    "errors": {
+      "rateLimited": "Too many messages in a row. Wait a moment and try again.",
+      "notConfigured": "Chat isn't available right now.",
+      "unavailable": "Chat is busy. Try again shortly.",
+      "failed": "We couldn't reply. Try again.",
+      "stopped": "Stopped."
+    }
   }
 }
