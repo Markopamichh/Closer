@@ -27,6 +27,7 @@ import {
   leadStatusEnum,
   messageRoleEnum,
   usageEventTypeEnum,
+  visitStatusEnum,
 } from "./enums";
 
 // Every table in this file is tenant data:
@@ -51,10 +52,27 @@ export const agents = pgTable(
     rules: jsonb().$type<string[]>().notNull().default([]),
     model: text().notNull().default("gpt-5-nano"),
     isActive: boolean().notNull().default(true),
+    /** IANA zone the business works in: visit times the agent books are read in it. */
+    timezone: text().notNull().default("UTC"),
+    widgetEnabled: boolean().notNull().default(false),
+    /**
+     * Public, rotatable id embedded in the business's site. Not a secret (anyone can read
+     * it from the page), so it only identifies the widget; frame-ancestors and the daily
+     * cap are what bound its use. ~122 random bits, so keys can't be enumerated.
+     */
+    publicKey: text()
+      .notNull()
+      .default(sql`'pk_' || replace(gen_random_uuid()::text, '-', '')`),
+    /** Origins (scheme://host[:port]) allowed to frame the widget. Empty: nowhere. */
+    allowedOrigins: text()
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     ...timestamps,
   },
   (t) => [
     unique("agents_id_org_unique").on(t.id, t.orgId),
+    unique("agents_public_key_unique").on(t.publicKey),
     index("agents_org_id_idx").on(t.orgId, t.createdAt),
     tenantIsolationPolicy(),
   ],
@@ -80,6 +98,7 @@ export const inventoryItems = pgTable(
     ...timestamps,
   },
   (t) => [
+    unique("inventory_items_id_org_unique").on(t.id, t.orgId),
     unique("inventory_items_org_external_id_unique").on(t.orgId, t.externalId),
     index("inventory_items_org_status_idx").on(t.orgId, t.status),
     index("inventory_items_attributes_idx").using("gin", t.attributes),
@@ -159,6 +178,38 @@ export const leads = pgTable(
     index("leads_org_status_idx").on(t.orgId, t.status, t.createdAt),
     index("leads_assigned_to_idx").on(t.assignedTo),
     check("leads_score_check", sql`${t.score} between 0 and 100`),
+    tenantIsolationPolicy(),
+  ],
+);
+
+export const visits = pgTable(
+  "visits",
+  {
+    id: id(),
+    orgId: orgId(),
+    leadId: uuid().notNull(),
+    /** What they want to see, when the visit is about one item. */
+    inventoryItemId: uuid(),
+    scheduledAt: timestamp({ withTimezone: true }).notNull(),
+    status: visitStatusEnum().notNull().default("requested"),
+    notes: text(),
+    ...timestamps,
+  },
+  (t) => [
+    foreignKey({
+      name: "visits_lead_fk",
+      columns: [t.leadId, t.orgId],
+      foreignColumns: [leads.id, leads.orgId],
+    }).onDelete("cascade"),
+    // Sold items get archived, not deleted, once someone asked to see them.
+    foreignKey({
+      name: "visits_inventory_item_fk",
+      columns: [t.inventoryItemId, t.orgId],
+      foreignColumns: [inventoryItems.id, inventoryItems.orgId],
+    }).onDelete("restrict"),
+    index("visits_org_scheduled_idx").on(t.orgId, t.scheduledAt),
+    index("visits_lead_id_idx").on(t.leadId),
+    index("visits_inventory_item_id_idx").on(t.inventoryItemId),
     tenantIsolationPolicy(),
   ],
 );

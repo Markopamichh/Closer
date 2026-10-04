@@ -43,6 +43,13 @@
       "when": 1790911229872,
       "tag": "0005_blue_grey_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791131590675,
+      "tag": "0006_widget_and_visits",
+      "breakpoints": true
     }
   ]
 }

@@ -40,6 +40,8 @@ export const leadStatusEnum = pgEnum("lead_status", [
   "lost",
 ]);
 
+export const visitStatusEnum = pgEnum("visit_status", ["requested", "confirmed", "cancelled"]);
+
 export const callStatusEnum = pgEnum("call_status", ["success", "error"]);
 
 export const usageEventTypeEnum = pgEnum("usage_event_type", [

@@ -67,7 +67,13 @@ Announce every skill used (which one and why). This file wins over a skill; flag
 - Run `pnpm format:check` as its own command before committing (never piped through `tail`).
 - Keep this project outside iCloud-synced folders (Desktop/Documents): sync creates `* 2` duplicates that corrupt `node_modules` and the Next.js cache.
 
-## Current status (Week 3 done; Week 4 next)
+## Current status (Week 4 in progress)
+
+**Week 4 plan (approved 2026-10-04):** 4.1 schema (agent widget fields: `widget_enabled`, rotatable `public_key`, `allowed_origins`, `timezone`; `visits` table; `closer_widget_lookup` SECURITY DEFINER so a public key resolves to its org without opening `agents`), 4.2 public widget chat API (cookieless SSE by public key; shared agent-run service with the test chat; visitor id must match to continue a conversation; per-visitor + per-org limits and a per-org **daily message cap**, pulled forward from Week 5), 4.3 embed (`/embed/[publicKey]` iframe served by Next with CSP `frame-ancestors` from `allowed_origins`, small loader script, Widget section on the Agent page), 4.4 leads (`save_lead` tool, the first write tool, limited to its own conversation's lead; Leads page), 4.5 human handoff (`request_human` stops the AI; human replies from Conversations; widget polls while handed off), 4.6 visits (`book_visit` creates a request in the org's timezone; team confirms/cancels; no external calendar), 4.7 close. Decisions: iframe over a Shadow-DOM script (no CORS, browser-enforced embedding, reuses React/Tailwind/i18n); polling over WebSockets for human replies.
+
+- [x] 4.1 Schema: migration `0006` (apply to Supabase). drizzle-kit ordered the `inventory_items (id, org_id)` unique after the FK needing it; moved by hand in the SQL.
+
+## Week 3 (done)
 
 **Week 3 closed (2026-10-03):** OpenAI agent loop with read-only tenant-bound tools, cached policy prefix, SSE test chat (persisted, traced with exact cost, metered, rate-limited fail-closed), Agent page verified by Marko in a real browser, own theme provider (dropped `next-themes`). Checks + build green (464 tests), `security-review` found nothing exploitable.
 

@@ -73,13 +73,21 @@ async function seedTenant(orgId: string) {
   await owner`
     insert into chunks (org_id, document_id, chunk_index, content, token_count, embedding)
     values (${orgId}, ${document?.id ?? null}, 0, 'chunk', 1, ${embedding}::vector)`;
+  const [item] = await owner<{ id: string }[]>`
+    insert into inventory_items (org_id, kind, title) values (${orgId}, 'vehicle', 'car') returning id`;
   await owner`
-    insert into inventory_items (org_id, kind, title) values (${orgId}, 'vehicle', 'car')`;
+    insert into visits (org_id, lead_id, inventory_item_id, scheduled_at)
+    values (${orgId}, ${lead?.id ?? null}, ${item?.id ?? null}, now() + interval '1 day')`;
   await owner`insert into usage_events (org_id, type, quantity) values (${orgId}, 'ai_message', 1)`;
   await owner`
     insert into ai_traces (org_id, conversation_id, model, input_tokens, output_tokens, cost_usd, latency_ms, status)
     values (${orgId}, ${conversation?.id ?? null}, 'm', 10, 5, 0.0001, 300, 'success')`;
-  return { conversationId: String(conversation?.id), documentId: String(document?.id) };
+  return {
+    conversationId: String(conversation?.id),
+    documentId: String(document?.id),
+    leadId: String(lead?.id),
+    agentId: String(agent?.id),
+  };
 }
 
 let seededA: Awaited<ReturnType<typeof seedTenant>>;
@@ -202,5 +210,52 @@ describe("composite foreign keys (id, org_id)", () => {
     ],
   ])("reject %s", async (_name, insert) => {
     await expect(insert()).rejects.toMatchObject({ code: "23503" });
+  });
+});
+
+describe("public widget lookup (closer_widget_lookup)", () => {
+  const keyOf = async (agentId: string) => {
+    const [row] = await owner<{ public_key: string }[]>`
+      select public_key from agents where id = ${agentId}`;
+    return String(row?.public_key);
+  };
+
+  it("resolves a key without tenant context, and only to its own agent", async () => {
+    const key = await keyOf(seededA.agentId);
+    const rows = await asApp(null, (tx) => tx`select * from closer_widget_lookup(${key})`);
+    expect(rows).toEqual([
+      { org_id: orgA, agent_id: seededA.agentId, allowed_origins: [], enabled: false },
+    ]);
+  });
+
+  it("an unknown key resolves to nothing", async () => {
+    const rows = await asApp(null, (tx) => tx`select * from closer_widget_lookup('pk_nope')`);
+    expect(rows).toHaveLength(0);
+  });
+
+  it("does not open the agents table: a direct lookup by key still sees nothing", async () => {
+    const key = await keyOf(seededA.agentId);
+    const rows = await asApp(null, (tx) => tx`select id from agents where public_key = ${key}`);
+    expect(rows).toHaveLength(0);
+  });
+
+  it("is executable by closer_app but not by PUBLIC", async () => {
+    const [row] = await owner<{ app: boolean; anyone: boolean }[]>`
+      select
+        has_function_privilege('closer_app', 'closer_widget_lookup(text)', 'execute') as app,
+        exists (
+          select 1 from pg_proc p, aclexplode(p.proacl) acl
+          where p.proname = 'closer_widget_lookup' and acl.grantee = 0
+        ) as anyone`;
+    expect(row).toEqual({ app: true, anyone: false });
+  });
+});
+
+describe("visits cannot point across tenants", () => {
+  it("a visit in B for A's lead is rejected by the composite FK", async () => {
+    await expect(
+      owner`insert into visits (org_id, lead_id, scheduled_at)
+        values (${orgB}, ${seededA.leadId}, now())`,
+    ).rejects.toThrow(/visits_lead_fk/);
   });
 });
