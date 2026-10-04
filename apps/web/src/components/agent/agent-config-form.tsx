@@ -26,10 +26,13 @@ export function AgentConfigForm({
   orgId,
   agent,
   canEdit,
+  timezones,
 }: {
   orgId: string;
   agent: AgentDto;
   canEdit: boolean;
+  /** From the server, so the options match on hydration. */
+  timezones: string[];
 }) {
   const t = useTranslations("agentPage");
   const router = useRouter();
@@ -47,6 +50,7 @@ export function AgentConfigForm({
       name: text("name"),
       tone: text("tone"),
       model: text("model"),
+      timezone: text("timezone"),
       systemPrompt: text("systemPrompt"),
       rules: text("rules")
         .split("\n")
@@ -129,6 +133,22 @@ export function AgentConfigForm({
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="cfg-timezone">{t("fields.timezone")}</Label>
+              <select
+                id="cfg-timezone"
+                name="timezone"
+                defaultValue={agent.timezone}
+                className={selectClass}
+              >
+                {timezones.map((tz) => (
+                  <option key={tz} value={tz}>
+                    {tz.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">{t("fields.timezoneHelp")}</p>
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="cfg-rules">{t("fields.rules")}</Label>

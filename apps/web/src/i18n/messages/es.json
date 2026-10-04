@@ -304,7 +304,9 @@
       "rules": "Reglas",
       "rulesHelp": "Una por línea, por ejemplo \"Ofrecer siempre una prueba de manejo\".",
       "notes": "Notas del negocio",
-      "notesHelp": "Contexto extra: ubicación, horarios, qué los diferencia."
+      "notesHelp": "Contexto extra: ubicación, horarios, qué los diferencia.",
+      "timezone": "Zona horaria",
+      "timezoneHelp": "Las visitas que agende el agente se interpretan en esta zona."
     },
     "tones": {
       "friendly": "Amigable",
@@ -338,6 +340,26 @@
       "unavailable": "El modelo está ocupado en este momento. Prueba de nuevo enseguida.",
       "failed": "El agente no pudo responder. Prueba de nuevo.",
       "stopped": "Detenido."
+    },
+    "widget": {
+      "title": "Widget",
+      "description": "El chat que tus visitantes ven en tu sitio web.",
+      "enabled": "Widget activado",
+      "origins": "Sitios permitidos",
+      "originsHelp": "Un dominio por línea, por ejemplo https://www.tusitio.com. El widget solo se puede mostrar en estos sitios.",
+      "save": "Guardar widget",
+      "saving": "Guardando…",
+      "saved": "Guardado",
+      "saveFailed": "No se pudo guardar el widget",
+      "invalidOrigin": "\"{origin}\" no es un dominio válido. Usa solo el origen, por ejemplo https://www.tusitio.com",
+      "tooManyOrigins": "Como máximo {max} sitios.",
+      "snippet": "Código para tu sitio",
+      "snippetHelp": "Pégalo antes de </body> en las páginas donde quieras el chat.",
+      "copy": "Copiar código",
+      "copied": "Copiado",
+      "preview": "Vista previa",
+      "rotate": "Generar nueva clave",
+      "rotateConfirm": "El código actual dejará de funcionar en todos los sitios donde esté pegado. ¿Generar una clave nueva?"
     }
   },
   "conversations": {

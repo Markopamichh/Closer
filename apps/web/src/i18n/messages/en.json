@@ -304,7 +304,9 @@
       "rules": "Rules",
       "rulesHelp": "One per line, e.g. \"Always offer a test drive\".",
       "notes": "Business notes",
-      "notesHelp": "Extra context: location, opening hours, what makes you different."
+      "notesHelp": "Extra context: location, opening hours, what makes you different.",
+      "timezone": "Time zone",
+      "timezoneHelp": "Visits the agent books are read in this zone."
     },
     "tones": {
       "friendly": "Friendly",
@@ -338,6 +340,26 @@
       "unavailable": "The model is busy right now. Try again in a moment.",
       "failed": "The agent could not answer. Try again.",
       "stopped": "Stopped."
+    },
+    "widget": {
+      "title": "Widget",
+      "description": "The chat your visitors see on your website.",
+      "enabled": "Widget enabled",
+      "origins": "Allowed sites",
+      "originsHelp": "One per line, e.g. https://www.your-site.com. The widget can only be shown on these sites.",
+      "save": "Save widget",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "saveFailed": "Couldn't save the widget",
+      "invalidOrigin": "\"{origin}\" is not a valid site. Use just the origin, e.g. https://www.your-site.com",
+      "tooManyOrigins": "At most {max} sites.",
+      "snippet": "Code for your site",
+      "snippetHelp": "Paste it before </body> on the pages where you want the chat.",
+      "copy": "Copy code",
+      "copied": "Copied",
+      "preview": "Preview",
+      "rotate": "Generate new key",
+      "rotateConfirm": "The current code will stop working on every site it's pasted on. Generate a new key?"
     }
   },
   "conversations": {
