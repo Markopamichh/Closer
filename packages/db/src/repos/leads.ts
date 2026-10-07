@@ -79,17 +79,15 @@ export function leadsRepo(tx: Tx, orgId: string) {
         .for("update");
       if (!conversation) return null;
 
+      // Drizzle skips undefined keys in set/values, so absent fields stay as they are.
       const { interest, ...fields } = details;
-      const defined = Object.fromEntries(
-        Object.entries(fields).filter(([, value]) => value !== undefined),
-      );
       const metadata = interest === undefined ? {} : { interest };
 
       if (conversation.leadId) {
         const [row] = await tx
           .update(leads)
           .set({
-            ...defined,
+            ...fields,
             metadata: sql`${leads.metadata} || ${JSON.stringify(metadata)}::jsonb`,
           })
           .where(scope(conversation.leadId))
@@ -98,7 +96,7 @@ export function leadsRepo(tx: Tx, orgId: string) {
       }
       const [row] = await tx
         .insert(leads)
-        .values({ ...defined, metadata, orgId })
+        .values({ ...fields, metadata, orgId })
         .returning();
       if (!row) throw new Error("leads.saveForConversation: insert returned no row");
       await tx

@@ -200,7 +200,7 @@ export function createAgentTools(deps: {
             .optional()
             .describe("0-100: 80+ ready to buy or visit, 50 comparing options, 20 just browsing"),
         })
-        .refine((v) => Object.values(v).some((value) => value !== undefined), {
+        .refine((v) => Object.keys(v).length > 0, {
           message: "Send at least one field",
         }),
       execute: async (input) =>
