@@ -113,7 +113,7 @@ export async function streamAgentReply(
         model: agent.model,
         instructions: buildInstructions(agent, businessName),
         history: [...toChatItems(input.history), { type: "user", text: input.message }],
-        tools: createAgentTools({ db, orgId, embedder }),
+        tools: createAgentTools({ db, orgId, conversationId, embedder }),
         cacheKey: `agent:${agent.id}`,
         signal: controller.signal,
         onEvent: (event) => {

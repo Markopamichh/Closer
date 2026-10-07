@@ -109,6 +109,44 @@ describe("conversations repository without RLS", () => {
   });
 });
 
+describe("leads repository without RLS", () => {
+  let leadB: string;
+
+  beforeAll(async () => {
+    const [lead] = await db.$client`
+      insert into leads (org_id, name) values (${orgB}, 'B lead') returning id`;
+    leadB = String(lead?.id);
+  });
+
+  it("list and get never return another org's lead", async () => {
+    const { rows } = await db.transaction((tx) =>
+      createTenantRepo(tx, orgA).leads.list({ limit: 100, offset: 0 }),
+    );
+    expect(rows.map((r) => r.lead.id)).not.toContain(leadB);
+    const row = await db.transaction((tx) => createTenantRepo(tx, orgA).leads.get(leadB));
+    expect(row).toBeNull();
+  });
+
+  it("update of another org's lead affects nothing", async () => {
+    const row = await db.transaction((tx) =>
+      createTenantRepo(tx, orgA).leads.update(leadB, { status: "lost" }),
+    );
+    expect(row).toBeNull();
+    const [after] = await db.$client`select status from leads where id = ${leadB}`;
+    expect(after?.status).toBe("new");
+  });
+
+  it("cannot attach a lead to another org's conversation", async () => {
+    const row = await db.transaction((tx) =>
+      createTenantRepo(tx, orgA).leads.saveForConversation(conversationB, { name: "x" }),
+    );
+    expect(row).toBeNull();
+    const [conversation] = await db.$client`
+      select lead_id from conversations where id = ${conversationB}`;
+    expect(conversation?.lead_id).toBeNull();
+  });
+});
+
 describe("withTenant", () => {
   it("rejects a non-UUID org id before touching the database", async () => {
     await expect(withTenant(db, "' or 1=1 --", async () => Promise.resolve())).rejects.toThrow(

@@ -32,7 +32,12 @@ async function createItem(body: Record<string, unknown>) {
 beforeAll(async () => {
   ctx = createTestContext();
   w = await buildWorld(ctx);
-  toolsA = createAgentTools({ db: ctx.db, orgId: w.orgA, embedder: ctx.embedder });
+  toolsA = createAgentTools({
+    db: ctx.db,
+    orgId: w.orgA,
+    conversationId: crypto.randomUUID(),
+    embedder: ctx.embedder,
+  });
   for (const [orgId, documentId] of [
     [w.orgA, w.docA.id],
     [w.orgB, w.docB.id],

@@ -1,6 +1,6 @@
 import { and, asc, eq } from "drizzle-orm";
 import type { Db } from "./client";
-import { memberships, organizations } from "./schema";
+import { memberships, organizations, users } from "./schema";
 
 // Identity lookups, intentionally not tenant-scoped: they are how we find out which
 // tenants the caller belongs to before entering a tenant context.
@@ -34,4 +34,14 @@ export async function getOrganizationName(db: Db, orgId: string) {
     .from(organizations)
     .where(eq(organizations.id, orgId));
   return row?.name ?? null;
+}
+
+/** Members of an org the caller was already verified to belong to (for assignment pickers). */
+export function listMembers(db: Db, orgId: string) {
+  return db
+    .select({ id: users.id, name: users.name, email: users.email, role: memberships.role })
+    .from(memberships)
+    .innerJoin(users, eq(users.id, memberships.userId))
+    .where(eq(memberships.orgId, orgId))
+    .orderBy(asc(users.name));
 }

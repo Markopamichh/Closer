@@ -16,6 +16,7 @@ import { conversationRoutes } from "./routes/conversations";
 import { documentRoutes } from "./routes/documents";
 import { healthRoutes } from "./routes/health";
 import { inventoryRoutes } from "./routes/inventory";
+import { leadRoutes } from "./routes/leads";
 import { meRoutes } from "./routes/me";
 import { organizationRoutes } from "./routes/organizations";
 import { widgetRoutes } from "./routes/widget";
@@ -60,6 +61,7 @@ export function createApp(deps: AppDeps) {
   app.route("/api/organizations/:orgId/agents/:agentId/test-chat", agentChatRoutes(deps));
   app.route("/api/organizations/:orgId/agents", agentRoutes(deps));
   app.route("/api/organizations/:orgId/conversations", conversationRoutes(deps));
+  app.route("/api/organizations/:orgId/leads", leadRoutes(deps));
   app.route("/api/organizations/:orgId/inventory", inventoryRoutes(deps));
   app.route("/api/organizations/:orgId/documents", documentRoutes(deps));
   app.route("/api/public/widget", widgetRoutes(deps));

@@ -37,16 +37,40 @@ const toAgentItem = (item: ItemRow, descriptionChars: number) => ({
   description: clip(item.description, descriptionChars),
 });
 
+const digits = (text: string) => text.replace(/\D/g, "");
+
 /**
- * Read-only tools for one conversation. The org is bound here, from the conversation the
- * caller loaded, and is not a parameter the model can set or override.
+ * Contact details must come from the customer, not the model: an email or phone is only
+ * saved if it appears in one of the customer's own messages in this conversation. That
+ * turns "never invent contact details" (and any injected one) from a prompt rule into a
+ * check the model cannot talk its way around.
+ */
+export function saidByCustomer(
+  messages: string[],
+  contact: { email?: string; phone?: string },
+): boolean {
+  const text = messages.join("\n");
+  if (contact.email && !text.toLowerCase().includes(contact.email.toLowerCase())) return false;
+  if (contact.phone) {
+    const wanted = digits(contact.phone);
+    // Compare digits only, per message: "+54 9 11 1234-5678" and "5491112345678" match.
+    if (!messages.some((message) => digits(message).includes(wanted))) return false;
+  }
+  return true;
+}
+
+/**
+ * Tools for one conversation. The org and the conversation are bound here, from what the
+ * caller loaded, and are not parameters the model can set or override. All tools read,
+ * except save_lead, which can only write the lead of this same conversation.
  */
 export function createAgentTools(deps: {
   db: Db;
   orgId: string;
+  conversationId: string;
   embedder: EmbeddingProvider;
 }): AgentTool[] {
-  const { db, orgId, embedder } = deps;
+  const { db, orgId, conversationId, embedder } = deps;
 
   return [
     defineTool({
@@ -143,6 +167,55 @@ export function createAgentTools(deps: {
           })),
         };
       },
+    }),
+
+    defineTool({
+      name: "save_lead",
+      description:
+        "Save what you learned about this customer so the sales team can follow up: contact " +
+        "details exactly as the customer wrote them, what they are looking for, and how ready " +
+        "they seem to buy. Call it when they share contact details or a clear interest; call it " +
+        "again to update. Only send what the customer said; never guess contact details.",
+      input: z
+        .object({
+          name: z.string().trim().min(1).max(100).optional(),
+          email: z.email().max(200).optional(),
+          phone: z
+            .string()
+            .trim()
+            .regex(/^\+?[0-9 ().-]{6,30}$/)
+            .optional(),
+          interest: z
+            .string()
+            .trim()
+            .min(1)
+            .max(500)
+            .optional()
+            .describe("What they want, e.g. 'used pickup under 25k, financing'"),
+          score: z
+            .number()
+            .int()
+            .min(0)
+            .max(100)
+            .optional()
+            .describe("0-100: 80+ ready to buy or visit, 50 comparing options, 20 just browsing"),
+        })
+        .refine((v) => Object.values(v).some((value) => value !== undefined), {
+          message: "Send at least one field",
+        }),
+      execute: async (input) =>
+        withTenant(db, orgId, async (repo) => {
+          const history = await repo.conversations.recentMessages(conversationId, 200);
+          const said = history.filter((m) => m.role === "user").map((m) => m.content);
+          if (!saidByCustomer(said, input)) {
+            return {
+              error:
+                "That email or phone does not appear in the customer's messages. Ask them for it and save exactly what they write.",
+            };
+          }
+          const lead = await repo.leads.saveForConversation(conversationId, input);
+          return lead ? { saved: true } : { error: "Could not save the lead" };
+        }),
     }),
   ];
 }

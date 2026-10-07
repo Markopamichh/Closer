@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import type { Db, Tx } from "./client";
 import { agentsRepo } from "./repos/agents";
 import { conversationsRepo } from "./repos/conversations";
+import { leadsRepo } from "./repos/leads";
 import { documentsRepo } from "./repos/documents";
 import { inventoryRepo } from "./repos/inventory";
 import { usageRepo } from "./repos/usage";
@@ -36,6 +37,7 @@ export function createTenantRepo(tx: Tx, orgId: string) {
     orgId,
     agents: agentsRepo(tx, orgId),
     conversations: conversationsRepo(tx, orgId),
+    leads: leadsRepo(tx, orgId),
     inventory: inventoryRepo(tx, orgId),
     documents: documentsRepo(tx, orgId),
     usage: usageRepo(tx, orgId),

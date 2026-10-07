@@ -16,6 +16,7 @@ type ErrorBody = { error: { code: string; message: string; requestId: string } }
 let ctx: TestContext;
 let w: World;
 let conversationB: string;
+let leadB: string;
 
 beforeAll(async () => {
   ctx = createTestContext();
@@ -25,6 +26,11 @@ beforeAll(async () => {
     values (${w.orgB}, ${w.agentB.id}, 'dashboard_test') returning id`;
   if (!row) throw new Error("seed conversation failed");
   conversationB = row.id;
+  const [lead] = await ctx.sql<{ id: string }[]>`
+    insert into leads (org_id, name, email) values (${w.orgB}, 'B lead', 'b@example.com')
+    returning id`;
+  if (!lead) throw new Error("seed lead failed");
+  leadB = lead.id;
   await ctx.sql`insert into messages (org_id, conversation_id, role, content)
     values (${w.orgB}, ${conversationB}, 'user', 'B secret question')`;
 });
@@ -43,11 +49,13 @@ async function snapshotOrgB() {
     from inventory_items where org_id = ${w.orgB} order by id`;
   const documents = await ctx.sql`
     select id, title, status, updated_at from documents where org_id = ${w.orgB} order by id`;
+  const leads = await ctx.sql`
+    select id, status, assigned_to, updated_at from leads where org_id = ${w.orgB} order by id`;
   const [counts] = await ctx.sql`
     select
       (select count(*) from invitations where org_id = ${w.orgB})::int as invitations,
       (select count(*) from memberships where org_id = ${w.orgB})::int as memberships`;
-  return { agents, inventory, documents, counts };
+  return { agents, inventory, documents, leads, counts };
 }
 
 type Attack = {
@@ -136,6 +144,18 @@ const attacksOnOrgB: Attack[] = [
     name: "search B's documents",
     method: "GET",
     path: () => `/api/organizations/${w.orgB}/documents/search?q=rentals`,
+  },
+  { name: "list B's leads", method: "GET", path: () => `/api/organizations/${w.orgB}/leads` },
+  {
+    name: "update B's lead",
+    method: "PATCH",
+    path: () => `/api/organizations/${w.orgB}/leads/${leadB}`,
+    body: () => ({ status: "lost" }),
+  },
+  {
+    name: "list B's members",
+    method: "GET",
+    path: () => `/api/organizations/${w.orgB}/members`,
   },
   {
     name: "rotate B's widget key",
@@ -243,6 +263,25 @@ describe("B's resource ids through A's routes (IDOR)", () => {
       expect(await snapshotOrgB()).toEqual(before);
     },
   );
+});
+
+describe("B's lead through A's routes (IDOR)", () => {
+  it("owner of A cannot update B's lead via A's org (404, B unchanged)", async () => {
+    const before = await snapshotOrgB();
+    const res = await w.a.owner.request(`/api/organizations/${w.orgA}/leads/${leadB}`, {
+      method: "PATCH",
+      body: { status: "lost" },
+    });
+    expect(res.status).toBe(404);
+    expect((await json<ErrorBody>(res)).error.message).toBe("Lead not found");
+    expect(await snapshotOrgB()).toEqual(before);
+  });
+
+  it("A's lead list never includes B's lead", async () => {
+    const res = await w.a.owner.request(`/api/organizations/${w.orgA}/leads`);
+    const { leads } = await json<{ leads: { id: string }[] }>(res);
+    expect(leads.map((l) => l.id)).not.toContain(leadB);
+  });
 });
 
 describe("B's conversation through A's routes (IDOR)", () => {
