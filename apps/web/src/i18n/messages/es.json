@@ -413,5 +413,44 @@
       "failed": "No pudimos responder. Prueba de nuevo.",
       "stopped": "Detenido."
     }
+  },
+  "leads": {
+    "all": "Todos",
+    "filterLabel": "Filtrar por estado",
+    "anonymous": "Sin nombre",
+    "unassigned": "Sin asignar",
+    "saveFailed": "No se pudo guardar",
+    "columns": {
+      "lead": "Lead",
+      "interest": "Busca",
+      "score": "Puntaje",
+      "status": "Estado",
+      "assignee": "Asignado a",
+      "pipeline": "Estado y responsable",
+      "created": "Creado",
+      "conversation": "Conversación"
+    },
+    "statuses": {
+      "new": "Nuevo",
+      "qualified": "Calificado",
+      "contacted": "Contactado",
+      "visit_scheduled": "Visita agendada",
+      "won": "Ganado",
+      "lost": "Perdido"
+    },
+    "bands": {
+      "hot": "caliente",
+      "warm": "tibio",
+      "cold": "frío"
+    },
+    "openConversation": "Ver la conversación con {name}",
+    "emptyTitle": "Todavía no hay leads",
+    "emptyDescription": "Cuando un visitante deje sus datos o muestre interés, el agente lo guarda acá para que tu equipo haga el seguimiento.",
+    "noResultsTitle": "Ningún lead en este estado",
+    "noResultsDescription": "Prueba con otro estado o mira todos.",
+    "pagination": "Paginación",
+    "range": "{from}–{to} de {total}",
+    "previous": "Anterior",
+    "next": "Siguiente"
   }
 }

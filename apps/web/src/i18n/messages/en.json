@@ -413,5 +413,44 @@
       "failed": "We couldn't reply. Try again.",
       "stopped": "Stopped."
     }
+  },
+  "leads": {
+    "all": "All",
+    "filterLabel": "Filter by status",
+    "anonymous": "No name",
+    "unassigned": "Unassigned",
+    "saveFailed": "Couldn't save",
+    "columns": {
+      "lead": "Lead",
+      "interest": "Looking for",
+      "score": "Score",
+      "status": "Status",
+      "assignee": "Assigned to",
+      "pipeline": "Status and owner",
+      "created": "Created",
+      "conversation": "Conversation"
+    },
+    "statuses": {
+      "new": "New",
+      "qualified": "Qualified",
+      "contacted": "Contacted",
+      "visit_scheduled": "Visit scheduled",
+      "won": "Won",
+      "lost": "Lost"
+    },
+    "bands": {
+      "hot": "hot",
+      "warm": "warm",
+      "cold": "cold"
+    },
+    "openConversation": "Open the conversation with {name}",
+    "emptyTitle": "No leads yet",
+    "emptyDescription": "When a visitor leaves their details or shows interest, the agent saves them here for your team to follow up.",
+    "noResultsTitle": "No leads in this status",
+    "noResultsDescription": "Try another status or view all.",
+    "pagination": "Pagination",
+    "range": "{from}–{to} of {total}",
+    "previous": "Previous",
+    "next": "Next"
   }
 }

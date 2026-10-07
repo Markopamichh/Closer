@@ -1,10 +1,12 @@
 import "server-only";
-import type { ListInventoryQuery, OrganizationSummary } from "@closer/shared";
+import type { LeadStatus, ListInventoryQuery, OrganizationSummary } from "@closer/shared";
 import {
   agentListSchema,
   conversationDetailSchema,
   conversationPageSchema,
   documentListSchema,
+  leadPageSchema,
+  memberListSchema,
   inventoryPageSchema,
   meSchema,
   organizationListSchema,
@@ -81,3 +83,16 @@ export const getConversation = async (orgId: string, conversationId: string) =>
       conversationDetailSchema,
     )
   )?.conversation ?? null;
+
+export const getLeads = (
+  orgId: string,
+  query: { status?: LeadStatus; limit: number; offset: number },
+) => {
+  const params = new URLSearchParams({ limit: String(query.limit), offset: String(query.offset) });
+  if (query.status) params.set("status", query.status);
+  return apiGet(`/api/organizations/${encodeURIComponent(orgId)}/leads?${params}`, leadPageSchema);
+};
+
+export const getMembers = async (orgId: string) =>
+  (await apiGet(`/api/organizations/${encodeURIComponent(orgId)}/members`, memberListSchema))
+    .members;
