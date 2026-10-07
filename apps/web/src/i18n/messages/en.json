@@ -354,7 +354,7 @@
       "invalidOrigin": "\"{origin}\" is not a valid site. Use just the origin, e.g. https://www.your-site.com",
       "tooManyOrigins": "At most {max} sites.",
       "snippet": "Code for your site",
-      "snippetHelp": "Paste it before </body> on the pages where you want the chat.",
+      "snippetHelp": "Paste it before {tag} on the pages where you want the chat.",
       "copy": "Copy code",
       "copied": "Copied",
       "preview": "Preview",

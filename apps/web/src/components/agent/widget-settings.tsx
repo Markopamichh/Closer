@@ -140,7 +140,7 @@ export function WidgetSettings({
 
         <div className="grid gap-2">
           <Label htmlFor="widget-snippet">{t("snippet")}</Label>
-          <p className="text-xs text-muted-foreground">{t("snippetHelp")}</p>
+          <p className="text-xs text-muted-foreground">{t("snippetHelp", { tag: "</body>" })}</p>
           <pre
             id="widget-snippet"
             className="overflow-x-auto rounded-lg border bg-muted/40 p-3 font-mono text-xs whitespace-pre-wrap break-all"

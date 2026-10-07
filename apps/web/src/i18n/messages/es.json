@@ -354,7 +354,7 @@
       "invalidOrigin": "\"{origin}\" no es un dominio válido. Usa solo el origen, por ejemplo https://www.tusitio.com",
       "tooManyOrigins": "Como máximo {max} sitios.",
       "snippet": "Código para tu sitio",
-      "snippetHelp": "Pégalo antes de </body> en las páginas donde quieras el chat.",
+      "snippetHelp": "Pégalo antes de {tag} en las páginas donde quieras el chat.",
       "copy": "Copiar código",
       "copied": "Copiado",
       "preview": "Vista previa",
