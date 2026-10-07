@@ -79,10 +79,12 @@ export function createAgentTools(deps: {
         "Search the business's AVAILABLE inventory (vehicles, properties or other items). Use it before " +
         "stating anything about stock, prices or features. Prices are in each item's own currency.",
       input: z.object({
+        // "" is allowed and means no text filter (see execute): models send "" for optional
+        // fields, and rejecting it costs a round trip. No .transform here: tool schemas must
+        // convert to JSON Schema for the provider.
         query: z
           .string()
           .trim()
-          .min(1)
           .max(100)
           .optional()
           .describe(
@@ -100,28 +102,37 @@ export function createAgentTools(deps: {
         limit: z.number().int().min(1).max(MAX_RESULTS).optional(),
       }),
       execute: async (input) => {
-        const page = await withTenant(db, orgId, (repo) =>
-          repo.inventory.list({
-            status: "available",
-            kind: input.kind,
-            q: input.query,
-            minPriceCents:
-              input.minPrice === undefined ? undefined : Math.round(input.minPrice * 100),
-            maxPriceCents:
-              input.maxPrice === undefined ? undefined : Math.round(input.maxPrice * 100),
-            limit: input.limit ?? 5,
-            offset: 0,
-          }),
-        );
+        const search = (q: string | undefined) =>
+          withTenant(db, orgId, (repo) =>
+            repo.inventory.list({
+              status: "available",
+              kind: input.kind,
+              q,
+              minPriceCents:
+                input.minPrice === undefined ? undefined : Math.round(input.minPrice * 100),
+              maxPriceCents:
+                input.maxPrice === undefined ? undefined : Math.round(input.maxPrice * 100),
+              limit: input.limit ?? 5,
+              offset: 0,
+            }),
+          );
+        const query = input.query || undefined;
+        const page = await search(query);
+        const toResult = (found: typeof page) => ({
+          total: found.total,
+          items: found.items.map((item) => toAgentItem(item, SUMMARY_CHARS)),
+        });
+        if (page.total > 0 || !query) return toResult(page);
+
+        // Words like "sedan" or "cheap" are rarely in titles, and a small model reads "no
+        // results" as "out of stock" instead of retrying. So the tool retries for it: same
+        // filters without the text, and says so.
+        const browse = await search(undefined);
         return {
-          total: page.total,
-          items: page.items.map((item) => toAgentItem(item, SUMMARY_CHARS)),
-          // An actionable empty result lets the model recover in its next round.
-          ...(page.total === 0 && input.query
-            ? {
-                hint: "No title or reference contains that text. Search again without `query` to browse by kind and price.",
-              }
-            : {}),
+          ...toResult(browse),
+          note:
+            `No title or reference contains "${query}". These are the available items ` +
+            "matching the other filters: check their attributes and descriptions yourself.",
         };
       },
     }),

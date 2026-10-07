@@ -41,6 +41,8 @@ export function createOpenAiClient(options: {
   maxOutputTokens?: number;
   /** Defaults to "minimal": in a real sales-chat test it gave the same answer as "low" at 43% of the cost. */
   reasoningEffort?: OpenAI.ReasoningEffort;
+  /** Defaults to "low": a sales chat should read like a person typing, not a brochure. */
+  verbosity?: "low" | "medium" | "high";
 }): LlmClient {
   const client = new OpenAI({ apiKey: options.apiKey });
 
@@ -60,6 +62,7 @@ export function createOpenAiClient(options: {
             stream: true,
             max_output_tokens: options.maxOutputTokens ?? 4096,
             reasoning: { effort: options.reasoningEffort ?? "minimal" },
+            text: { verbosity: options.verbosity ?? "low" },
             ...(request.cacheKey ? { prompt_cache_key: request.cacheKey } : {}),
           },
           { signal: request.signal },

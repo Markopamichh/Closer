@@ -1,5 +1,6 @@
 import type { AgentTool } from "@closer/ai";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { z } from "zod";
 import { createAgentTools } from "../src/agent/tools";
 import { processDocument } from "../src/ingestion/process-document";
 import type { World } from "./fixtures";
@@ -51,6 +52,16 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await ctx.close();
+});
+
+describe("tool definitions", () => {
+  // The provider gets each schema as JSON Schema; a .transform or .refine-only shape that
+  // Zod can't express breaks every chat turn, not just this tool.
+  it("every tool's input converts to JSON Schema", () => {
+    for (const tool of toolsA) {
+      expect(() => z.toJSONSchema(tool.input), tool.name).not.toThrow();
+    }
+  });
 });
 
 describe("tenant isolation", () => {
@@ -105,14 +116,35 @@ describe("business rules", () => {
     expect(over.items.map((i) => i.id)).toEqual([pricey.id]);
   });
 
-  it("tells the model how to recover when a literal query matches nothing", async () => {
-    const empty = await call("search_inventory", { query: "camioneta auto", maxPrice: 20000 });
-    expect(empty).toMatchObject({
-      total: 0,
-      hint: expect.stringContaining("without `query`") as unknown,
-    });
+  it("when a literal query matches nothing, it browses the same filters and says so", async () => {
+    const cheap = await createItem({ title: "Nissan Sentra FALLBACK", priceCents: 1_500_000 });
+    const empty = (await call("search_inventory", {
+      query: "sedan",
+      kind: "vehicle",
+      maxPrice: 16000,
+    })) as Found & { note?: string };
+    expect(empty.items.map((i) => i.id)).toContain(cheap.id);
+    expect(empty.items.every((i) => i.status === "available")).toBe(true);
+    expect(empty.note).toContain('"sedan"');
+
+    const matched = (await call("search_inventory", { query: "FALLBACK" })) as Found;
+    expect(matched).not.toHaveProperty("note");
     const browse = await call("search_inventory", { kind: "vehicle" });
-    expect(browse).not.toHaveProperty("hint");
+    expect(browse).not.toHaveProperty("note");
+  });
+
+  it("an empty query means no text filter, not an error", async () => {
+    const result = (await call("search_inventory", { query: "", kind: "vehicle" })) as Found;
+    expect(result.items.length).toBeGreaterThan(0);
+    expect(result).not.toHaveProperty("note");
+  });
+
+  it("the fallback keeps the price filter (no items outside the asked range)", async () => {
+    const result = (await call("search_inventory", {
+      query: "nothing-matches-this",
+      minPrice: 999_999_000,
+    })) as Found;
+    expect(result.items).toEqual([]);
   });
 
   it("clips long descriptions in search results", async () => {

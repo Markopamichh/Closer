@@ -85,6 +85,7 @@ Announce every skill used (which one and why). This file wins over a skill; flag
 Carry into Week 4/5:
 
 - Week 4 (widget): design CORS + CSRF together (explicit Origin checks) when cross-origin requests start; today CSRF rests on SameSite=Lax cookies + JSON-only bodies.
+- Agent voice (2026-10-07, from Marko's widget test): short, human replies via a "How you talk" policy (1–3 sentences, plain text, one question, no recaps) plus `text.verbosity: "low"` (verified in openai 7.25 types). Replies went from ~150 to ~30 words. `search_inventory` now retries without the text itself when a literal query finds nothing ("sedan" is never in titles; nano read empty results as no stock) and treats `query: ""` as no filter. Still seen: `gpt-5-nano` at minimal reasoning is inconsistent run to run (one replay skipped the search and leaked "I would need to search"): the Week 5 evals must measure this, and compare reasoning `low` and `gpt-5-mini` before changing the default.
 - Week 5: per-org daily spend budget (today only 20 messages/min); trace tokens of completed rounds when the client aborts mid-reply; evals for `gpt-5-nano` quality and the literal `search_inventory` query (semantic inventory search if evals show misses).
 - If the dashboard throws "API /api/me failed with 500": the API's `/health` reports `database: unreachable` when Docker is down. Run `colima start && docker compose up -d`.
 
